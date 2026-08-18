@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Something new is taking flight.</title>
+<style>
+  :root {
+    --ink: #ffffff;
+    --ink-dim: #b7b7b7;
+    --bg: #000000;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    outline: none;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 50% 42%, rgba(255,255,255,.05), transparent 34%),
+      linear-gradient(115deg, rgba(255,255,255,.02), transparent 42%, rgba(255,255,255,.03));
+  }
+
+  #sky {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 74% 18%, rgba(255,255,255,.14), transparent 22%),
+      linear-gradient(180deg, #000000 0%, #050505 43%, #0a0a0a 76%, #000000 100%);
+  }
+
+  #sky::before {
+    content: "";
+    position: absolute;
+    left: -8%;
+    right: -8%;
+    bottom: 11%;
+    height: 27%;
+    opacity: .16;
+    background:
+      linear-gradient(to top, rgba(255,255,255,.30), rgba(255,255,255,.06) 68%, transparent),
+      linear-gradient(90deg,
+        transparent 0 5%, rgba(255,255,255,.20) 5% 8%, transparent 8% 11%,
+        rgba(255,255,255,.16) 11% 17%, transparent 17% 20%,
+        rgba(255,255,255,.22) 20% 23%, transparent 23% 29%,
+        rgba(255,255,255,.18) 29% 34%, transparent 34% 39%,
+        rgba(255,255,255,.20) 39% 42%, transparent 42% 48%,
+        rgba(255,255,255,.17) 48% 53%, transparent 53% 59%,
+        rgba(255,255,255,.20) 59% 63%, transparent 63% 69%,
+        rgba(255,255,255,.18) 69% 75%, transparent 75% 81%,
+        rgba(255,255,255,.21) 81% 86%, transparent 86% 91%,
+        rgba(255,255,255,.16) 91% 96%, transparent 96%);
+    filter: blur(1.2px);
+  }
+
+  #sky::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: .10;
+    background-image:
+      linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: linear-gradient(to bottom, black, transparent 82%);
+  }
+
+  #ground {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: 14vh;
+    min-height: 72px;
+    z-index: 3;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.12)),
+      linear-gradient(to top, rgba(255,255,255,.16), rgba(255,255,255,.04));
+    border-top: 1px solid rgba(255,255,255,.20);
+    box-shadow: 0 -18px 55px rgba(255,255,255,.04);
+  }
+
+  #hud {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding: clamp(20px, 4vw, 42px);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  #title-block {
+    padding-left: 16px;
+    border-left: 3px solid var(--ink);
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
+  }
+
+  #title-block h1 {
+    margin: 0;
+    font-family: "SF Mono", "Cascadia Mono", "Cascadia Code", Consolas,
+      "Liberation Mono", monospace;
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 700;
+    letter-spacing: .16em;
+    color: var(--ink);
+    text-transform: uppercase;
+  }
+
+  #title-block p {
+    margin: .5em 0 0;
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    color: var(--ink-dim);
+    letter-spacing: .02em;
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  #status {
+    min-width: 400px;
+    text-align: right;
+    font-family: "SF Mono", "Cascadia Mono", Consolas,
+      "Liberation Mono", monospace;
+    font-size: clamp(1.5rem, 5.4vw, 4.1rem);
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: .04em;
+    line-height: 1.7;
+    filter: drop-shadow(0 2px 10px rgba(0,0,0,.5));
+  }
+
+  #status .label {
+    font-size: .62em;
+    font-weight: 600;
+    color: var(--ink-dim);
+    letter-spacing: .12em;
+    margin-right: .4em;
+  }
+
+  #status .val {
+    color: var(--ink);
+    font-weight: 800;
+  }
+
+  #status .unit {
+    font-size: .62em;
+    font-weight: 600;
+    color: var(--ink-dim);
+  }
+
+  #badge-row {
+    margin-top: .35em;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: .9em;
+    font-size: .38em;
+  }
+
+  #rec-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5em;
+    font-weight: 700;
+    letter-spacing: .22em;
+    color: var(--ink);
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+
+  #rec-badge.show {
+    opacity: .92;
+    transform: translateY(0);
+  }
+
+  #rec-dot {
+    width: .6em;
+    height: .6em;
+    border-radius: 50%;
+    background: var(--ink);
+    display: inline-block;
+    animation: blink-badge 1s ease-in-out infinite;
+  }
+
+  #frame-count {
+    color: var(--ink-dim);
+    font-weight: 600;
+  }
+
+  #auto-badge {
+    font-weight: 700;
+    letter-spacing: .3em;
+    color: var(--ink);
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity .4s ease, transform .4s ease;
+  }
+
+  #auto-badge.show {
+    opacity: .8;
+    transform: translateY(0);
+    animation: blink-badge 1.6s ease-in-out infinite;
+  }
+
+  @keyframes blink-badge {
+    0%, 100% { opacity: .8; }
+    50% { opacity: .25; }
+  }
+
+  #controls-hint {
+    position: fixed;
+    bottom: clamp(18px, 4vh, 34px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(92vw, 720px);
+    font-size: clamp(.72rem, 1.2vw, .84rem);
+    color: var(--ink-dim);
+    font-weight: 600;
+    letter-spacing: .045em;
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+    transition: opacity 1s ease;
+  }
+
+  #controls-hint kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    margin: 0 2px;
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    color: var(--ink);
+    background: rgba(255,255,255,.08);
+    box-shadow: inset 0 0 8px rgba(255,255,255,.04);
+    font-family: "SF Mono", "Cascadia Mono", Consolas,
+      "Liberation Mono", monospace;
+    font-size: .84rem;
+    font-weight: 700;
+    transition: background .08s ease, color .08s ease, box-shadow .08s ease;
+  }
+
+  #controls-hint kbd.pressed {
+    background: var(--ink);
+    color: #000;
+    box-shadow: 0 0 14px rgba(255,255,255,.55);
+  }
+
+  #controls-hint .alt-keys {
+    opacity: .55;
+    margin: 0 .35em;
+  }
+
+  #drone {
+    position: fixed;
+    width: 72px;
+    height: 72px;
+    pointer-events: none;
+    z-index: 5;
+    will-change: transform;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,.35));
+  }
+
+  #drone svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  #camera-lens {
+    transition: r .3s ease, fill .3s ease;
+  }
+
+  #camera-lens.capturing {
+    fill: #ffffff;
+  }
+
+  .prop {
+    transform-origin: center;
+    animation: spin .12s linear infinite;
+  }
+
+  #drone::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: var(--ink);
+    box-shadow: 0 0 16px 5px rgba(255,255,255,.45);
+  }
+
+  #sky-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  #trail-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  #ripple-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 6;
+  }
+
+  #focus-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 7;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 600px) {
+    #hud {
+      flex-direction: column;
+      padding: 16px 16px;
+      gap: 14px;
+    }
+
+    #title-block {
+      padding-left: 11px;
+    }
+
+    #title-block p {
+      max-width: 300px;
+      line-height: 1.4;
+    }
+
+    #status {
+      min-width: 0;
+      width: 100%;
+      text-align: left;
+      font-size: 2.1rem;
+      line-height: 1.5;
+    }
+
+    #controls-hint {
+      bottom: 18px;
+      padding: 0 8px;
+    }
+
+    #drone {
+      width: 64px;
+      height: 64px;
+    }
+  }
+
+  @media (pointer: coarse) {
+    #controls-hint {
+      font-size: 0;
+    }
+    #controls-hint::after {
+      content: "Drag to fly";
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .prop { animation-duration: .5s; }
+  }
+</style>
+</head>
+<body tabindex="0">
+
+<div id="sky"></div>
+<canvas id="sky-canvas"></canvas>
+<canvas id="trail-canvas"></canvas>
+<canvas id="ripple-canvas"></canvas>
+<canvas id="focus-canvas"></canvas>
+<div id="ground"></div>
+
+<div id="hud">
+  <div id="title-block">
+    <h1>pyx.co.jp</h1>
+    <p><em>Something new is taking flight.</em></p>
+  </div>
+  <div id="status">
+    <span class="label">ALT</span><span class="val" id="alt-val">120</span><span class="unit">m</span><br>
+    <span class="label">HDG</span><span class="val" id="hdg-val">000</span><span class="unit">&deg;</span><br>
+    <span class="label">SPD</span><span class="val" id="spd-val">0.0</span><span class="unit">m/s</span>
+    <div id="badge-row">
+      <span id="rec-badge"><span id="rec-dot"></span>REC <span id="frame-count">001</span></span>
+      <span id="auto-badge">AUTOPILOT</span>
+    </div>
+  </div>
+</div>
+
+<div id="drone">
+  <svg viewBox="0 0 100 100">
+    <g id="drone-body">
+      <line x1="20" y1="20" x2="80" y2="80" stroke="#ffffff" stroke-width="4"/>
+      <line x1="80" y1="20" x2="20" y2="80" stroke="#ffffff" stroke-width="4"/>
+      <circle cx="50" cy="50" r="14" fill="#000000" stroke="#f2f2f2" stroke-width="2.5"/>
+      <circle id="camera-lens" cx="50" cy="50" r="4" fill="#f2f2f2"/>
+      <g class="prop"><circle cx="20" cy="20" r="11" fill="none" stroke="#f2f2f2" stroke-width="2.5" opacity="0.75"/></g>
+      <g class="prop"><circle cx="80" cy="20" r="11" fill="none" stroke="#f2f2f2" stroke-width="2.5" opacity="0.75"/></g>
+      <g class="prop"><circle cx="20" cy="80" r="11" fill="none" stroke="#f2f2f2" stroke-width="2.5" opacity="0.75"/></g>
+      <g class="prop"><circle cx="80" cy="80" r="11" fill="none" stroke="#f2f2f2" stroke-width="2.5" opacity="0.75"/></g>
+    </g>
+  </svg>
+</div>
+
+<div id="controls-hint">
+  <kbd id="key-up">&#8593;</kbd><kbd id="key-down">&#8595;</kbd><kbd id="key-left">&#8592;</kbd><kbd id="key-right">&#8594;</kbd>
+  <span class="alt-keys">or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+  to fly &nbsp;&mdash;&nbsp; move mouse to steer
+</div>
+
+<script>
+(function () {
+  var win = { w: window.innerWidth, h: window.innerHeight };
+  window.addEventListener('resize', function () {
+    win.w = window.innerWidth; win.h = window.innerHeight;
+  });
+
+  var drone = document.getElementById('drone');
+  var altVal = document.getElementById('alt-val');
+  var hdgVal = document.getElementById('hdg-val');
+  var spdVal = document.getElementById('spd-val');
+  var hint = document.getElementById('controls-hint');
+  var autoBadge = document.getElementById('auto-badge');
+  var recBadge = document.getElementById('rec-badge');
+  var frameCount = document.getElementById('frame-count');
+  var cameraLens = document.getElementById('camera-lens');
+
+  var pos = { x: win.w / 2, y: win.h / 2 };
+  var vel = { x: 0, y: 0 };
+  var target = { x: win.w / 2, y: win.h / 2 };
+  var usingKeys = false;
+  var lastInputTime = Date.now();
+
+  var groundLimit = function () { return win.h * 0.86; };
+  var margin = 40;
+
+  window.addEventListener('mousemove', function (e) {
+    // While a key is physically held, the keyboard owns the drone -- a
+    // resting hand on a trackpad must not be able to steal control.
+    if (anyKeyDown()) {
+      target.x = e.clientX;
+      target.y = e.clientY;
+      return;
+    }
+    var moved = Math.abs(e.clientX - target.x) > 1 || Math.abs(e.clientY - target.y) > 1;
+    target.x = e.clientX;
+    target.y = e.clientY;
+    if (moved) {
+      usingKeys = false;
+      autopilot = false;
+      lastInputTime = Date.now();
+      fadeHint();
+    }
+  });
+
+
+  window.addEventListener('touchmove', function (e) {
+    if (!e.touches || !e.touches[0]) return;
+    target.x = e.touches[0].clientX;
+    target.y = e.touches[0].clientY;
+    usingKeys = false;
+    autopilot = false;
+    lastInputTime = Date.now();
+    fadeHint();
+    e.preventDefault();
+  }, { passive: false });
+
+  // Map a keyboard event onto a direction. Arrow keys are primary; WASD
+  // works too. e.key covers modern browsers, keyCode is the old fallback.
+  var keys = { up: false, down: false, left: false, right: false };
+  var KEY_DIRS = {
+    ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+    w: 'up', s: 'down', a: 'left', d: 'right',
+    W: 'up', S: 'down', A: 'left', D: 'right'
+  };
+  var CODE_DIRS = { 38: 'up', 40: 'down', 37: 'left', 39: 'right',
+                    87: 'up', 83: 'down', 65: 'left', 68: 'right' };
+
+  function dirOf(e) {
+    if (e.key && KEY_DIRS[e.key]) return KEY_DIRS[e.key];
+    var kc = e.keyCode || e.which;
+    return (kc && CODE_DIRS[kc]) ? CODE_DIRS[kc] : null;
+  }
+
+  function anyKeyDown() {
+    return keys.up || keys.down || keys.left || keys.right;
+  }
+
+  function lightKey(dir, on) {
+    var node = document.getElementById('key-' + dir);
+    if (!node) return;
+    if (on) node.classList.add('pressed');
+    else node.classList.remove('pressed');
+  }
+
+  window.addEventListener('keydown', function (e) {
+    var dir = dirOf(e);
+    if (!dir) return;
+    keys[dir] = true;
+    lightKey(dir, true);
+    usingKeys = true;
+    autopilot = false;
+    lastInputTime = Date.now();
+    fadeHint();
+    e.preventDefault();
+  });
+
+  window.addEventListener('keyup', function (e) {
+    var dir = dirOf(e);
+    if (!dir) return;
+    keys[dir] = false;
+    lightKey(dir, false);
+    e.preventDefault();
+  });
+
+  // Releasing keys while the page loses focus avoids a stuck throttle.
+  window.addEventListener('blur', function () {
+    keys.up = keys.down = keys.left = keys.right = false;
+    lightKey('up', false); lightKey('down', false);
+    lightKey('left', false); lightKey('right', false);
+  });
+
+  var hintFaded = false;
+  function fadeHint() {
+    if (hintFaded) return;
+    hintFaded = true;
+    setTimeout(function () { hint.style.opacity = '0.35'; }, 2200);
+  }
+
+  var accel = 0.9;
+  var friction = 0.92;
+  var maxSpeed = 9;
+  var followEase = 0.045;
+
+  var trailCanvas = document.getElementById('trail-canvas');
+  var ctx = trailCanvas.getContext('2d');
+  function resizeCanvas() {
+    trailCanvas.width = window.innerWidth;
+    trailCanvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  var trail = [];
+
+  var rippleCanvas = document.getElementById('ripple-canvas');
+  var rctx = rippleCanvas.getContext('2d');
+  function resizeRippleCanvas() {
+    rippleCanvas.width = window.innerWidth;
+    rippleCanvas.height = window.innerHeight;
+  }
+  resizeRippleCanvas();
+  window.addEventListener('resize', resizeRippleCanvas);
+
+  var ripples = [];
+  function spawnRipple(x, y) {
+    ripples.push({ x: x, y: y, r: 4, a: 1 });
+  }
+  window.addEventListener('click', function (e) {
+    spawnRipple(e.clientX, e.clientY);
+  });
+  window.addEventListener('touchstart', function (e) {
+    if (!e.touches || !e.touches[0]) return;
+    spawnRipple(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+
+  function drawRipples() {
+    rctx.clearRect(0, 0, rippleCanvas.width, rippleCanvas.height);
+    for (var i = ripples.length - 1; i >= 0; i--) {
+      var r = ripples[i];
+      r.r += 3.6;
+      r.a *= 0.955;
+      if (r.a < 0.02) { ripples.splice(i, 1); continue; }
+      rctx.beginPath();
+      rctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+      rctx.strokeStyle = 'rgba(255,255,255,' + r.a.toFixed(3) + ')';
+      rctx.lineWidth = 1.6;
+      rctx.stroke();
+      rctx.beginPath();
+      rctx.arc(r.x, r.y, r.r * 0.6, 0, Math.PI * 2);
+      rctx.strokeStyle = 'rgba(255,255,255,' + (r.a * 0.5).toFixed(3) + ')';
+      rctx.lineWidth = 1;
+      rctx.stroke();
+    }
+  }
+
+  // ---- Background sky show: distant fireworks and the occasional rocket ----
+  // Kept deliberately small, pale and slow so it reads as scenery happening
+  // far behind the drone, never competing with the HUD or the camera work.
+  var skyCanvas = document.getElementById('sky-canvas');
+  var sctx = skyCanvas.getContext('2d');
+  function resizeSkyCanvas() {
+    skyCanvas.width = window.innerWidth;
+    skyCanvas.height = window.innerHeight;
+  }
+  resizeSkyCanvas();
+  window.addEventListener('resize', resizeSkyCanvas);
+
+  var sparks = [];      // firework shells + burst particles
+  var flashes = [];     // soft glow at the moment of each burst
+  var rocket = null;    // at most one rocket at a time
+  var smoke = [];       // rocket exhaust column
+  var skyBusy = false;  // fireworks and rockets never overlap
+
+  var nextFireworkAt = Date.now() + 3000 + Math.random() * 4000;
+  var nextRocketAt = Date.now() + 22000 + Math.random() * 20000;
+
+  function horizonY() { return win.h * 0.86; }
+
+  function launchFirework() {
+    // Keep bursts clear of the HUD corners: bias toward the middle band.
+    var x = win.w * (0.18 + Math.random() * 0.52);
+    var peak = win.h * (0.20 + Math.random() * 0.26);
+    sparks.push({
+      kind: 'shell',
+      x: x, y: horizonY(),
+      vy: -(6.5 + Math.random() * 2.2),
+      peak: peak,
+      a: 0.85
+    });
+  }
+
+  function burst(x, y) {
+    var count = 42 + Math.floor(Math.random() * 22);
+    var power = 2.6 + Math.random() * 1.9;
+    for (var i = 0; i < count; i++) {
+      var ang = (Math.PI * 2 * i) / count + Math.random() * 0.2;
+      var sp = power * (0.6 + Math.random() * 0.7);
+      sparks.push({
+        kind: 'ember',
+        x: x, y: y,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp,
+        a: 1,
+        decay: 0.978 + Math.random() * 0.012
+      });
+    }
+    flashes.push({ x: x, y: y, r: 8, a: 0.5 });
+  }
+
+  function launchRocket() {
+    rocket = {
+      x: win.w * (0.22 + Math.random() * 0.46),
+      y: horizonY(),
+      vy: -1.1,
+      age: 0
+    };
+  }
+
+  function updateSkyShow() {
+    var now = Date.now();
+
+    if (!skyBusy && !rocket && now > nextRocketAt) {
+      launchRocket();
+      skyBusy = true;
+      nextRocketAt = now + 45000 + Math.random() * 40000;
+    }
+
+    if (!skyBusy && now > nextFireworkAt) {
+      launchFirework();
+      nextFireworkAt = now + 3500 + Math.random() * 6000;
+      // occasional quick double
+      if (Math.random() < 0.35) {
+        setTimeout(function () { if (!skyBusy) launchFirework(); }, 420 + Math.random() * 500);
+      }
+    }
+
+    for (var i = sparks.length - 1; i >= 0; i--) {
+      var s = sparks[i];
+      if (s.kind === 'shell') {
+        s.y += s.vy;
+        s.vy *= 0.995;
+        if (s.y <= s.peak || s.vy > -1.2) {
+          burst(s.x, s.y);
+          sparks.splice(i, 1);
+        }
+      } else {
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += 0.035;      // gravity
+        s.vx *= 0.985;
+        s.vy *= 0.985;
+        s.a *= s.decay;
+        if (s.a < 0.015) sparks.splice(i, 1);
+      }
+    }
+
+    for (var f = flashes.length - 1; f >= 0; f--) {
+      var fl = flashes[f];
+      fl.r += 2.6;
+      fl.a *= 0.90;
+      if (fl.a < 0.01) flashes.splice(f, 1);
+    }
+
+    if (rocket) {
+      rocket.age += 16.7;
+      rocket.vy -= 0.028;                     // steady acceleration
+      rocket.vy = Math.max(rocket.vy, -9.5);
+      rocket.y += rocket.vy;
+      rocket.x += Math.sin(rocket.age / 900) * 0.25;
+
+      if (rocket.age % 33 < 17) {
+        smoke.push({ x: rocket.x + (Math.random() - 0.5) * 3, y: rocket.y + 6, r: 2, a: 0.35 });
+      }
+      if (rocket.y < -40) {
+        rocket = null;
+        skyBusy = false;
+      }
+    }
+
+    for (var j = smoke.length - 1; j >= 0; j--) {
+      var m = smoke[j];
+      m.r += 0.17;
+      m.y += 0.12;
+      m.a *= 0.972;
+      if (m.a < 0.01) smoke.splice(j, 1);
+    }
+  }
+
+  function drawSkyShow() {
+    sctx.clearRect(0, 0, skyCanvas.width, skyCanvas.height);
+
+    for (var f = 0; f < flashes.length; f++) {
+      var fl = flashes[f];
+      var g = sctx.createRadialGradient(fl.x, fl.y, 0, fl.x, fl.y, fl.r);
+      g.addColorStop(0, 'rgba(255,255,255,' + (fl.a * 0.5).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      sctx.fillStyle = g;
+      sctx.beginPath();
+      sctx.arc(fl.x, fl.y, fl.r, 0, Math.PI * 2);
+      sctx.fill();
+    }
+
+    for (var j = 0; j < smoke.length; j++) {
+      var m = smoke[j];
+      sctx.beginPath();
+      sctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+      sctx.fillStyle = 'rgba(190,190,190,' + (m.a * 0.34).toFixed(3) + ')';
+      sctx.fill();
+    }
+
+    if (rocket) {
+      // exhaust flare
+      var flare = sctx.createLinearGradient(rocket.x, rocket.y, rocket.x, rocket.y + 26);
+      flare.addColorStop(0, 'rgba(255,255,255,.85)');
+      flare.addColorStop(1, 'rgba(255,255,255,0)');
+      sctx.fillStyle = flare;
+      sctx.beginPath();
+      sctx.moveTo(rocket.x - 2.4, rocket.y);
+      sctx.lineTo(rocket.x + 2.4, rocket.y);
+      sctx.lineTo(rocket.x, rocket.y + 26);
+      sctx.closePath();
+      sctx.fill();
+      // body
+      sctx.fillStyle = 'rgba(255,255,255,.95)';
+      sctx.beginPath();
+      sctx.arc(rocket.x, rocket.y, 2.1, 0, Math.PI * 2);
+      sctx.fill();
+    }
+
+    for (var i = 0; i < sparks.length; i++) {
+      var s = sparks[i];
+      if (s.kind === 'shell') {
+        sctx.beginPath();
+        sctx.arc(s.x, s.y, 1.7, 0, Math.PI * 2);
+        sctx.fillStyle = 'rgba(255,255,255,' + s.a.toFixed(3) + ')';
+        sctx.fill();
+        sctx.beginPath();
+        sctx.moveTo(s.x, s.y);
+        sctx.lineTo(s.x, s.y + 12);
+        sctx.strokeStyle = 'rgba(255,255,255,' + (s.a * 0.22).toFixed(3) + ')';
+        sctx.lineWidth = 1;
+        sctx.stroke();
+      } else {
+        sctx.beginPath();
+        sctx.arc(s.x, s.y, 2.1, 0, Math.PI * 2);
+        sctx.fillStyle = 'rgba(255,255,255,' + (s.a * 0.95).toFixed(3) + ')';
+        sctx.fill();
+      }
+    }
+  }
+
+  // Aerial photography sim: every so often the drone "spots" a subject
+  // somewhere on screen, racks focus onto it with a viewfinder bracket,
+  // then fires a quiet shutter pulse. Runs independently of manual or
+  // autopilot flight -- the camera doesn't care who's driving.
+  var focusCanvas = document.getElementById('focus-canvas');
+  var fctx = focusCanvas.getContext('2d');
+  function resizeFocusCanvas() {
+    focusCanvas.width = window.innerWidth;
+    focusCanvas.height = window.innerHeight;
+  }
+  resizeFocusCanvas();
+  window.addEventListener('resize', resizeFocusCanvas);
+
+  var shot = null; // { x, y, phase, t, spread }
+  var frameNumber = 1;
+  var nextShotAt = Date.now() + 2600 + Math.random() * 1800;
+  var shutterFlash = 0;
+
+  function scheduleNextShot() {
+    nextShotAt = Date.now() + 6000 + Math.random() * 5000;
+  }
+
+  function maybeStartShot() {
+    if (shot || Date.now() < nextShotAt) return;
+    var gl = groundLimit();
+    // If a rocket is climbing, the camera goes for the money shot instead
+    // of picking a random patch of sky.
+    if (rocket && rocket.y > 60 && rocket.y < win.h * 0.8) {
+      shot = {
+        x: rocket.x,
+        y: rocket.y,
+        phase: 'seek',
+        t: 0,
+        spread: 150,
+        track: true
+      };
+    } else {
+      shot = {
+        x: 90 + Math.random() * (win.w - 180),
+        y: 90 + Math.random() * (Math.min(gl, win.h * 0.7) - 90),
+        phase: 'seek',
+        t: 0,
+        spread: 130 + Math.random() * 70,
+        track: false
+      };
+    }
+    recBadge.classList.add('show');
+  }
+
+  function updateShot() {
+    if (!shot) { maybeStartShot(); return; }
+    shot.t += 16.7;
+
+    if (shot.track) {
+      if (rocket) {
+        shot.x += (rocket.x - shot.x) * 0.18;
+        shot.y += (rocket.y - shot.y) * 0.18;
+      } else {
+        shot.track = false;
+      }
+    }
+
+    if (shot.phase === 'seek') {
+      cameraLens.classList.add('capturing');
+      if (shot.t > 650) { shot.phase = 'hold'; shot.t = 0; }
+    } else if (shot.phase === 'hold') {
+      if (shot.t > 380) {
+        shot.phase = 'shutter';
+        shot.t = 0;
+        shutterFlash = 1;
+      }
+    } else if (shot.phase === 'shutter') {
+      if (shot.t > 90) {
+        shot.phase = 'release';
+        shot.t = 0;
+      }
+    } else if (shot.phase === 'release') {
+      cameraLens.classList.remove('capturing');
+      if (shot.t > 260) {
+        frameNumber++;
+        frameCount.textContent = String(frameNumber).padStart(3, '0');
+        recBadge.classList.remove('show');
+        shot = null;
+        scheduleNextShot();
+      }
+    }
+  }
+
+  function drawShot() {
+    fctx.clearRect(0, 0, focusCanvas.width, focusCanvas.height);
+
+    if (shutterFlash > 0.01) {
+      fctx.fillStyle = 'rgba(255,255,255,' + (shutterFlash * 0.10).toFixed(3) + ')';
+      fctx.fillRect(0, 0, focusCanvas.width, focusCanvas.height);
+      shutterFlash *= 0.82;
+    }
+
+    if (!shot) return;
+
+    var progress, size, alpha;
+    if (shot.phase === 'seek') {
+      progress = Math.min(1, shot.t / 650);
+      size = shot.spread * (1 - 0.4 * progress);
+      alpha = progress;
+    } else if (shot.phase === 'hold') {
+      size = shot.spread * 0.6;
+      alpha = 1;
+    } else if (shot.phase === 'shutter') {
+      size = shot.spread * 0.6 * (1 - shot.t / 90 * 0.15);
+      alpha = 1;
+    } else {
+      progress = Math.min(1, shot.t / 260);
+      size = shot.spread * 0.6 * (1 + progress * 0.5);
+      alpha = 1 - progress;
+    }
+
+    var half = size / 2;
+    var arm = size * 0.22;
+    var cx = shot.x, cy = shot.y;
+    var col = shot.phase === 'shutter' ? '255,255,255' : '235,235,235';
+    fctx.strokeStyle = 'rgba(' + col + ',' + alpha.toFixed(3) + ')';
+    fctx.lineWidth = shot.phase === 'shutter' ? 2.4 : 1.6;
+
+    function corner(sx, sy, dx, dy) {
+      fctx.beginPath();
+      fctx.moveTo(sx, sy + dy * arm);
+      fctx.lineTo(sx, sy);
+      fctx.lineTo(sx + dx * arm, sy);
+      fctx.stroke();
+    }
+    corner(cx - half, cy - half, 1, 1);
+    corner(cx + half, cy - half, -1, 1);
+    corner(cx - half, cy + half, 1, -1);
+    corner(cx + half, cy + half, -1, -1);
+
+    if (shot.phase === 'hold' || shot.phase === 'shutter') {
+      fctx.fillStyle = 'rgba(' + col + ',' + (alpha * 0.85).toFixed(3) + ')';
+      fctx.beginPath();
+      fctx.arc(cx, cy, 1.6, 0, Math.PI * 2);
+      fctx.fill();
+    }
+  }
+
+  // Autopilot: after a few seconds of no input, the drone drifts on its own
+  // in a lazy Lissajous-style search pattern until the person moves the
+  // mouse, touches, or presses a key again.
+  var autopilot = false;
+  var autopilotSince = 0;
+  var AUTOPILOT_DELAY = 3200;
+  var apSeed = Math.random() * 1000;
+
+  function updateAutopilot() {
+    var idle = Date.now() - lastInputTime;
+    if (!autopilot && idle > AUTOPILOT_DELAY) {
+      autopilot = true;
+      autopilotSince = Date.now();
+      autoBadge.classList.add('show');
+    }
+    if (!autopilot) {
+      autoBadge.classList.remove('show');
+    }
+    if (autopilot) {
+      var t = (Date.now() - autopilotSince) / 1000 + apSeed;
+      var cx = win.w / 2;
+      var cy = Math.min(win.h * 0.42, groundLimit() - 140);
+      var rx = Math.min(win.w * 0.32, 340);
+      var ry = Math.min(win.h * 0.22, 180);
+      target.x = cx + Math.sin(t * 0.35) * rx;
+      target.y = cy + Math.sin(t * 0.55 + 1.3) * ry;
+    }
+  }
+
+  function step() {
+    updateAutopilot();
+
+    if (usingKeys && !autopilot) {
+      if (keys.up) vel.y -= accel;
+      if (keys.down) vel.y += accel;
+      if (keys.left) vel.x -= accel;
+      if (keys.right) vel.x += accel;
+      vel.x *= friction;
+      vel.y *= friction;
+      var sp = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
+      if (sp > maxSpeed) { vel.x = vel.x / sp * maxSpeed; vel.y = vel.y / sp * maxSpeed; }
+      pos.x += vel.x;
+      pos.y += vel.y;
+    } else {
+      var dx = target.x - pos.x;
+      var dy = target.y - pos.y;
+      var ease = autopilot ? 0.02 : followEase;
+      pos.x += dx * ease;
+      pos.y += dy * ease;
+      vel.x = dx * ease;
+      vel.y = dy * ease;
+    }
+
+    var gl = groundLimit();
+    if (pos.x < margin) { pos.x = margin; vel.x = 0; }
+    if (pos.x > win.w - margin) { pos.x = win.w - margin; vel.x = 0; }
+    if (pos.y < margin + 60) { pos.y = margin + 60; vel.y = 0; }
+    if (pos.y > gl) { pos.y = gl; vel.y = 0; }
+
+    var speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
+    var heading = (Math.atan2(vel.x, -vel.y) * 180 / Math.PI + 360) % 360;
+    var tilt = Math.max(-22, Math.min(22, vel.x * 2.2));
+
+    drone.style.transform = 'translate(' + (pos.x - 32) + 'px,' + (pos.y - 32) + 'px) rotate(' + tilt + 'deg)';
+
+    var altitude = Math.round((gl - pos.y) / gl * 180);
+    altVal.textContent = Math.max(0, altitude);
+    hdgVal.textContent = String(Math.round(heading)).padStart(3, '0');
+    spdVal.textContent = (speed).toFixed(1);
+
+    var speedRatio = Math.min(1, speed / maxSpeed);
+    trail.push({ x: pos.x, y: pos.y, a: 1, r: 1.4 + speedRatio * 2.2 });
+    if (trail.length > 100) trail.shift();
+    ctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+    for (var i = 0; i < trail.length; i++) {
+      var p = trail[i];
+      p.a *= 0.97;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + (p.a * (0.25 + speedRatio * 0.35)).toFixed(3) + ')';
+      ctx.fill();
+    }
+
+    updateSkyShow();
+    drawSkyShow();
+
+    drawRipples();
+
+    updateShot();
+    if (shot && shot.phase === 'shutter' && shot.t < 17) {
+      spawnRipple(shot.x, shot.y);
+    }
+    drawShot();
+
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+})();
+</script>
+
+</body>
+</html>
