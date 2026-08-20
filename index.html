@@ -1,960 +1,1061 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WordPress をやめて、静的サイトへ移行した話</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Something new is taking flight.</title>
 <style>
   :root {
-    --bg: #fdfcf9;
-    --text: #2b2a28;
-    --sub: #6b6863;
-    --accent: #2f6f4f;
-    --accent-light: #e7f2ec;
-    --line: #e4e0d8;
-    --card: #ffffff;
-    --code-bg: #f4f1ea;
-    --warn-bg: #fff4e5;
-    --warn-border: #e0a94b;
+    --ink: #ffffff;
+    --ink-dim: #b7b7b7;
+    --bg: #000000;
   }
+
   * { box-sizing: border-box; }
-  body {
+
+  html, body {
     margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
     background: var(--bg);
-    color: var(--text);
-    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
-    line-height: 1.9;
-    font-size: 17px;
+    color: var(--ink);
+    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    outline: none;
   }
-  .wrap {
-    max-width: 920px;
-    margin: 0 auto;
-    padding: 48px 32px 120px;
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 50% 42%, rgba(255,255,255,.05), transparent 34%),
+      linear-gradient(115deg, rgba(255,255,255,.02), transparent 42%, rgba(255,255,255,.03));
   }
-  header.hero {
-    padding: 56px 0 32px;
-    border-bottom: 3px solid var(--accent);
-    margin-bottom: 40px;
-  }
-  .kicker {
-    color: var(--accent);
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    font-size: 14px;
-    margin-bottom: 12px;
-  }
-  h1 {
-    font-size: 32px;
-    line-height: 1.5;
-    margin: 0 0 16px;
-  }
-  .lede {
-    color: var(--sub);
-    font-size: 16px;
-  }
-  h2 {
-    font-size: 24px;
-    margin-top: 64px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid var(--line);
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-  }
-  h2 .num {
-    color: var(--accent);
-    font-size: 15px;
-    font-weight: 700;
-    background: var(--accent-light);
-    padding: 3px 10px;
-    border-radius: 999px;
-  }
-  h3 {
-    font-size: 19px;
-    margin-top: 36px;
-    color: var(--text);
-  }
-  h4 {
-    font-size: 16px;
-    margin-top: 28px;
-    color: var(--accent);
-  }
-  p { margin: 16px 0; text-indent: 1em; }
-  .lede, .callout p, .warn p, .box p, .caption, .toc p { text-indent: 0; }
-  ul, ol { margin: 16px 0; padding-left: 1.4em; }
-  li { margin: 8px 0; }
-  a { color: var(--accent); }
-  .box {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 24px;
-    margin: 24px 0;
-  }
-  .diagram-box {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 20px;
-    margin: 28px 0;
-    overflow-x: auto;
-  }
-  .diagram-box svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
-  .caption {
-    text-align: center;
-    color: var(--sub);
-    font-size: 13px;
-    margin-top: 8px;
-  }
-  .callout {
-    background: var(--accent-light);
-    border-left: 4px solid var(--accent);
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin: 20px 0;
-  }
-  .callout strong { color: var(--accent); }
-  .warn {
-    background: var(--warn-bg);
-    border-left: 4px solid var(--warn-border);
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin: 20px 0;
-  }
-  code, pre {
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-    font-size: 14px;
-  }
-  code {
-    background: var(--code-bg);
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
-  pre {
-    background: var(--code-bg);
-    padding: 16px 18px;
-    border-radius: 10px;
-    overflow-x: auto;
-    line-height: 1.6;
-  }
-  pre code { background: none; padding: 0; }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 15px;
-  }
-  th, td {
-    border: 1px solid var(--line);
-    padding: 10px 12px;
-    text-align: left;
-    vertical-align: top;
-  }
-  th { background: var(--code-bg); }
-  .step-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 700;
-    font-size: 17px;
-    margin-bottom: 4px;
-  }
-  .step-num {
-    background: var(--accent);
-    color: #fff;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-  .toc {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin: 32px 0;
-  }
-  .toc-title { font-weight: 700; margin-bottom: 8px; color: var(--accent); }
-  .toc ol { margin: 0; padding-left: 1.2em; }
-  .toc li { margin: 4px 0; }
-  .toc a { text-decoration: none; }
-  hr.sep {
-    border: none;
-    border-top: 1px dashed var(--line);
-    margin: 48px 0;
-  }
-  footer {
-    margin-top: 64px;
-    padding-top: 24px;
-    border-top: 2px solid var(--line);
-    color: var(--sub);
-    font-size: 14px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c1b19;
-      --text: #eae7e0;
-      --sub: #a9a49a;
-      --accent: #6fcf9c;
-      --accent-light: #22332a;
-      --line: #3a382f;
-      --card: #262420;
-      --code-bg: #2a2822;
-      --warn-bg: #33291a;
-      --warn-border: #c78f3d;
-    }
-    th { background: var(--code-bg); }
-  }
-  .check {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin: 24px 0;
-  }
-  .check ul { list-style: none; padding-left: 0; }
-  .check li { padding-left: 1.8em; text-indent: -1.8em; }
-  .verdict {
-    font-weight: 700;
-    font-size: 18px;
-    color: var(--accent);
-    background: var(--accent-light);
-    border-radius: 8px;
-    padding: 14px 18px;
-    margin: 24px 0;
-    text-indent: 0;
-  }
-  .pill {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 999px;
-    white-space: nowrap;
-  }
-  .pill.done { background: var(--accent-light); color: var(--accent); }
-  .pill.pending { background: var(--warn-bg); color: #a76a12; }
-  @media (prefers-color-scheme: dark) { .pill.pending { color: var(--warn-border); } }
-  .toolbar {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin: 32px 0;
-  }
-  .toolbar button {
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--accent);
-    background: var(--card);
-    border: 1.5px solid var(--accent);
-    border-radius: 999px;
-    padding: 8px 20px;
-    cursor: pointer;
-    transition: all .2s ease;
-  }
-  .toolbar button:hover {
-    background: var(--accent);
-    color: #fff;
-  }
-  #accordion { margin: 24px 0 48px; }
-  .acc-item {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    margin-bottom: 16px;
+
+  #sky {
+    position: fixed;
+    inset: 0;
     overflow: hidden;
-    overflow-anchor: none;
+    background:
+      radial-gradient(circle at 74% 18%, rgba(255,255,255,.14), transparent 22%),
+      linear-gradient(180deg, #000000 0%, #050505 43%, #0a0a0a 76%, #000000 100%);
   }
-  .acc-item:last-child { margin-bottom: 0; }
-  .acc-header {
-    width: 100%;
+
+  #sky::before {
+    content: "";
+    position: absolute;
+    left: -8%;
+    right: -8%;
+    bottom: 11%;
+    height: 27%;
+    opacity: .16;
+    background:
+      linear-gradient(to top, rgba(255,255,255,.30), rgba(255,255,255,.06) 68%, transparent),
+      linear-gradient(90deg,
+        transparent 0 5%, rgba(255,255,255,.20) 5% 8%, transparent 8% 11%,
+        rgba(255,255,255,.16) 11% 17%, transparent 17% 20%,
+        rgba(255,255,255,.22) 20% 23%, transparent 23% 29%,
+        rgba(255,255,255,.18) 29% 34%, transparent 34% 39%,
+        rgba(255,255,255,.20) 39% 42%, transparent 42% 48%,
+        rgba(255,255,255,.17) 48% 53%, transparent 53% 59%,
+        rgba(255,255,255,.20) 59% 63%, transparent 63% 69%,
+        rgba(255,255,255,.18) 69% 75%, transparent 75% 81%,
+        rgba(255,255,255,.21) 81% 86%, transparent 86% 91%,
+        rgba(255,255,255,.16) 91% 96%, transparent 96%);
+    filter: blur(1.2px);
+  }
+
+  #sky::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: .10;
+    background-image:
+      linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: linear-gradient(to bottom, black, transparent 82%);
+  }
+
+  #ground {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: 14vh;
+    min-height: 72px;
+    z-index: 3;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.12)),
+      linear-gradient(to top, rgba(255,255,255,.16), rgba(255,255,255,.04));
+    border-top: 1px solid rgba(255,255,255,.20);
+    box-shadow: 0 -18px 55px rgba(255,255,255,.04);
+  }
+
+  #hud {
+    position: fixed;
+    top: 0; left: 0; right: 0;
     display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding: clamp(20px, 4vw, 42px);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  #title-block {
+    padding-left: 16px;
+    border-left: 3px solid var(--ink);
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
+  }
+
+  #title-block h1 {
+    margin: 0;
+    font-family: "SF Mono", "Cascadia Mono", "Cascadia Code", Consolas,
+      "Liberation Mono", monospace;
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 700;
+    letter-spacing: .16em;
+    color: var(--ink);
+    text-transform: uppercase;
+  }
+
+  #title-block p {
+    margin: .5em 0 0;
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    color: var(--ink-dim);
+    letter-spacing: .02em;
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  #status {
+    min-width: 400px;
+    text-align: right;
+    font-family: "SF Mono", "Cascadia Mono", Consolas,
+      "Liberation Mono", monospace;
+    font-size: clamp(1.5rem, 5.4vw, 4.1rem);
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: .04em;
+    line-height: 1.7;
+    filter: drop-shadow(0 2px 10px rgba(0,0,0,.5));
+  }
+
+  #status .label {
+    font-size: .62em;
+    font-weight: 600;
+    color: var(--ink-dim);
+    letter-spacing: .12em;
+    margin-right: .4em;
+  }
+
+  #status .val {
+    color: var(--ink);
+    font-weight: 800;
+  }
+
+  #status .unit {
+    font-size: .62em;
+    font-weight: 600;
+    color: var(--ink-dim);
+  }
+
+  #badge-row {
+    margin-top: .35em;
+    display: flex;
+    justify-content: flex-end;
     align-items: center;
-    gap: 14px;
-    background: none;
-    border: none;
-    padding: 20px 24px;
-    cursor: pointer;
-    text-align: left;
-    font-family: inherit;
-    color: var(--text);
-    -webkit-tap-highlight-color: transparent;
+    gap: .9em;
+    font-size: .38em;
   }
-  .acc-header .num {
-    flex: 0 0 auto;
-    color: var(--accent);
-    font-size: 14px;
+
+  #rec-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5em;
     font-weight: 700;
-    background: var(--accent-light);
-    padding: 4px 12px;
-    border-radius: 999px;
-    white-space: nowrap;
-  }
-  .acc-header .title {
-    flex: 1 1 auto;
-    font-size: 19px;
-    font-weight: 700;
-  }
-  .acc-header .chev {
-    flex: 0 0 auto;
-    width: 20px;
-    height: 20px;
-    color: var(--accent);
-    transition: transform .3s cubic-bezier(.4,0,.2,1);
-  }
-  .acc-item.open > .acc-header .chev { transform: rotate(180deg); }
-  .acc-item.open > .acc-header {
-    background: var(--accent-light);
-    border-bottom: 1px solid var(--line);
-  }
-  .acc-panel {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows .35s cubic-bezier(.4,0,.2,1);
-    overflow-anchor: none;
-  }
-  .acc-item.open > .acc-panel { grid-template-rows: 1fr; }
-  .acc-panel-inner {
-    overflow: hidden;
-    min-height: 0;
-    padding: 0 24px;
+    letter-spacing: .22em;
+    color: var(--ink);
     opacity: 0;
-    transition: opacity .3s ease .08s;
+    transform: translateY(-4px);
+    transition: opacity .35s ease, transform .35s ease;
   }
-  .acc-item.open > .acc-panel > .acc-panel-inner {
-    padding: 8px 24px 28px;
-    opacity: 1;
+
+  #rec-badge.show {
+    opacity: .92;
+    transform: translateY(0);
   }
-  .acc-panel-inner h2 { margin-top: 0; }
+
+  #rec-dot {
+    width: .6em;
+    height: .6em;
+    border-radius: 50%;
+    background: var(--ink);
+    display: inline-block;
+    animation: blink-badge 1s ease-in-out infinite;
+  }
+
+  #frame-count {
+    color: var(--ink-dim);
+    font-weight: 600;
+  }
+
+  #auto-badge {
+    font-weight: 700;
+    letter-spacing: .3em;
+    color: var(--ink);
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity .4s ease, transform .4s ease;
+  }
+
+  #auto-badge.show {
+    opacity: .8;
+    transform: translateY(0);
+    animation: blink-badge 1.6s ease-in-out infinite;
+  }
+
+  @keyframes blink-badge {
+    0%, 100% { opacity: .8; }
+    50% { opacity: .25; }
+  }
+
+  #controls-hint {
+    position: fixed;
+    bottom: clamp(18px, 4vh, 34px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(92vw, 720px);
+    font-size: clamp(.72rem, 1.2vw, .84rem);
+    color: var(--ink-dim);
+    font-weight: 600;
+    letter-spacing: .045em;
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+    transition: opacity 1s ease;
+  }
+
+  #controls-hint kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    margin: 0 2px;
+    border: 1.5px solid var(--ink);
+    border-radius: 6px;
+    color: var(--ink);
+    background: rgba(255,255,255,.08);
+    box-shadow: inset 0 0 8px rgba(255,255,255,.04);
+    font-family: "SF Mono", "Cascadia Mono", Consolas,
+      "Liberation Mono", monospace;
+    font-size: .84rem;
+    font-weight: 700;
+    transition: background .08s ease, color .08s ease, box-shadow .08s ease;
+  }
+
+  #controls-hint kbd.pressed {
+    background: var(--ink);
+    color: #000;
+    box-shadow: 0 0 14px rgba(255,255,255,.55);
+  }
+
+  #controls-hint .alt-keys {
+    opacity: .55;
+    margin: 0 .35em;
+  }
+
+  #drone {
+    position: fixed;
+    width: 72px;
+    height: 72px;
+    pointer-events: none;
+    z-index: 5;
+    will-change: transform;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,.35));
+  }
+
+  #drone svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  #camera-lens {
+    transition: r .3s ease, fill .3s ease;
+  }
+
+  #camera-lens.capturing {
+    fill: #ffffff;
+  }
+
+  .prop {
+    transform-origin: center;
+    animation: spin .12s linear infinite;
+  }
+
+  #drone::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: var(--ink);
+    box-shadow: 0 0 16px 5px rgba(255,255,255,.45);
+  }
+
+  #sky-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  #trail-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  #ripple-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 6;
+  }
+
+  #focus-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 7;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   @media (max-width: 600px) {
-    .acc-header { padding: 16px 16px; gap: 10px; }
-    .acc-header .title { font-size: 16px; }
-    .acc-item.open > .acc-panel > .acc-panel-inner { padding: 6px 16px 22px; }
+    #hud {
+      flex-direction: column;
+      padding: 16px 16px;
+      gap: 14px;
+    }
+
+    #title-block {
+      padding-left: 11px;
+    }
+
+    #title-block p {
+      max-width: 300px;
+      line-height: 1.4;
+    }
+
+    #status {
+      min-width: 0;
+      width: 100%;
+      text-align: left;
+      font-size: 2.1rem;
+      line-height: 1.5;
+    }
+
+    #controls-hint {
+      bottom: 18px;
+      padding: 0 8px;
+    }
+
+    #drone {
+      width: 64px;
+      height: 64px;
+    }
+  }
+
+  @media (pointer: coarse) {
+    #controls-hint {
+      font-size: 0;
+    }
+    #controls-hint::after {
+      content: "Drag to fly";
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .prop { animation-duration: .5s; }
   }
 </style>
 </head>
-<body>
-<div class="wrap">
+<body tabindex="0">
 
-<header class="hero">
-  <div class="kicker">実録・ある移行の記録</div>
-  <h1>WordPress をやめて、静的サイトへ移行した話</h1>
-  <p class="lede">二年近く更新が止まっていた会社サイト <code>pyx.co.jp</code> を、レンタルサーバー上の WordPress から、 GitHub Pages の静的サイトへ移した記録です。</p>
-</header>
+<div id="sky"></div>
+<canvas id="sky-canvas"></canvas>
+<canvas id="trail-canvas"></canvas>
+<canvas id="ripple-canvas"></canvas>
+<canvas id="focus-canvas"></canvas>
+<div id="ground"></div>
 
-<p>これは、筆者が実際におこなった移行作業の記録です。事前に計画書を作ってから臨みましたが、それでも計画に書いていなかった問題がいくつも出ました。うまくいったことも、想定と違ったことも、そのまま書いています。</p>
-<p>結果として、月々のサーバー費用は無くなりました。ただしそれはこの記事の主題ではなく、副次的な効果として最後に軽く触れる程度にとどめます。<strong>この記事の主題は、「動いていないサイトのために、動的な仕組みを維持し続ける必要が本当にあるか」を、実際に手を動かして確かめた記録</strong>です。</p>
-
-<div class="toc">
-  <div class="toc-title">この記事の流れ</div>
-  <ol>
-    <li>なぜ移すことにしたか</li>
-    <li>移行計画を立てる</li>
-    <li>実際の移行作業（工程順の記録）</li>
-    <li>振り返り：得られた教訓</li>
-    <li>すべてのサイトが WordPress の上にある必要はない、という話</li>
-  </ol>
-</div>
-
-<div class="toolbar">
-  <button id="expandAll" type="button">すべて開く</button>
-  <button id="collapseAll" type="button">すべて閉じる</button>
-</div>
-
-<div id="accordion">
-
-<section class="acc-item" data-acc>
-  <button class="acc-header" data-acc-toggle>
-    <span class="num">第１部</span>
-    <span class="title">なぜ移すことにしたか</span>
-    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-  </button>
-  <div class="acc-panel">
-    <div class="acc-panel-inner">
-<h3>1-1. 二年近く放置されていたサイト</h3>
-
-<p><code>pyx.co.jp</code> は筆者の会社のサイトで、 WordPress で作られていました。<br>ところが二年近く、記事の更新も、プラグインの更新も、ほとんど手を付けていない状態が続いていました。動いてはいるが、誰も世話をしていないサイトです。</p>
-
-<p>そこに、レンタルサーバーの契約期限という具体的な締切がやってきました。契約は自動更新が設定されておらず、支払いを行わなければ、期限日にアカウントが自然に凍結される見込みでした。<br>この期限をきっかけに、「同じ構成のまま契約を更新するか、それとも作り直すか」を考えることになりました。</p>
-
-<h3>1-2. 「動いていない」ものに、動的な仕組みは要らない</h3>
-
-<p>WordPress のような CMS （コンテンツ管理システム）で作られたサイトは、アクセスが来るたびにサーバー内のプログラム（ PHP など）が動き、データベースから記事の内容を取り出して、その場で HTML を組み立てて返します。これを<strong>動的サイト</strong>と呼びます。<br>一方の<strong>静的サイト</strong>は、あらかじめ完成させておいた HTML ・ CSS ・画像などのファイルを置いておくだけの仕組みです。アクセスが来ても、サーバーは「今から組み立てる」のではなく「もう完成しているファイルをそのまま渡す」だけです。</p>
-
-<div class="diagram-box">
-<svg viewBox="0 0 680 400" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <marker id="arrow-d2d3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#2f6f4f"/>
-    </marker>
-  </defs>
-  <style>
-    .node { fill: #ffffff; stroke: #2f6f4f; stroke-width: 2; }
-    .node-alt { fill: #e7f2ec; stroke: #2f6f4f; stroke-width: 2; }
-    .label { font-family: sans-serif; font-size: 14px; fill: #2b2a28; text-anchor: middle; }
-    .sub { font-family: sans-serif; font-size: 11px; fill: #6b6863; text-anchor: middle; }
-    .flow { stroke: #2f6f4f; stroke-width: 2; fill: none; marker-end: url(#arrow-d2d3); }
-    .title { font-family: sans-serif; font-size: 13px; font-weight: bold; fill: #2f6f4f; }
-  </style>
-
-  <text x="20" y="30" class="title">動的サイト：　アクセスのたびに組み立てる（＝サーバーを借り続ける）</text>
-  <rect x="20" y="60" width="130" height="60" rx="10" class="node"/>
-  <text x="85" y="95" class="label">ブラウザ</text>
-  <path d="M150,90 L228,90" class="flow"/>
-  <rect x="230" y="60" width="130" height="60" rx="10" class="node-alt"/>
-  <text x="295" y="88" class="label">サーバーの</text>
-  <text x="295" y="103" class="label">PHP プログラム</text>
-  <path d="M360,90 L438,90" class="flow"/>
-  <rect x="440" y="60" width="130" height="60" rx="10" class="node-alt"/>
-  <text x="505" y="88" class="label">データベース</text>
-  <text x="505" y="103" class="sub">（記事本文など）</text>
-  <path d="M440,110 Q295,170 150,110" class="flow"/>
-  <text x="295" y="180" class="sub">その場で HTML を生成して返す（毎回・ PHP とデータベースが常時必要）</text>
-
-  <line x1="0" y1="220" x2="680" y2="220" stroke="#e4e0d8" stroke-dasharray="4 4"/>
-
-  <text x="20" y="255" class="title">静的サイト：　完成品をそのまま渡す（＝無料ホスティングで足りる）</text>
-  <rect x="20" y="280" width="150" height="60" rx="10" class="node"/>
-  <text x="95" y="315" class="label">ブラウザ</text>
-  <path d="M170,310 L268,310" class="flow"/>
-  <rect x="270" y="280" width="180" height="60" rx="10" class="node-alt"/>
-  <text x="360" y="305" class="label">保存済みの HTML/CSS</text>
-  <text x="360" y="322" class="sub">（あらかじめ完成しているファイル）</text>
-  <path d="M270,340 L172,340" class="flow"/>
-  <text x="220" y="362" class="sub">ファイルを渡すだけ（サーバー側でアプリケーションを実行しない）</text>
-</svg>
-</div>
-<p class="caption">図１：　動的サイトと静的サイトの、リクエストごとの処理の違い</p>
-
-<p><code>pyx.co.jp</code> は、誰かがログインしたり、コメントを書き込んだり、その場で何かを購入したりするサイトではありませんでした。<br>動いていない二年間、サイトは動的な仕組み（ PHP ・データベース・管理画面・プラグイン）を、誰も使わないまま維持し続けていたことになります。<strong>動いていないサイトに、動的な仕組みは要らないのではないか。</strong>これが、作り直しを検討した最初の動機でした。</p>
-
-<h3>1-3. 旧記事は移さず、ゼロから作り直す</h3>
-
-<p>もう一つ、早い段階で決めたことがあります。<strong>旧サイトの記事はひとつも移行しない</strong>という判断です。<br>二年近く更新が止まっていた内容を、手間をかけて移し替える価値があるかを考えた結果でした。当初公開する内容は仮の一枚のページのみとし、本格的な内容は落ち着いてから作り込む方針にしました。</p>
-<p>移さないことも、立派な選択肢です。移行というと「今あるものを、そのまま新しい場所に運ぶ」と考えがちですが、価値が薄れた内容まで律儀に運ぶ必要はありません。移す中身を減らすほど、移行作業そのものは小さくなります。</p>
+<div id="hud">
+  <div id="title-block">
+    <h1>pyx.co.jp</h1>
+    <p><em>Something new is taking flight.</em></p>
+  </div>
+  <div id="status">
+    <span class="label">ALT</span><span class="val" id="alt-val">120</span><span class="unit">m</span><br>
+    <span class="label">HDG</span><span class="val" id="hdg-val">000</span><span class="unit">&deg;</span><br>
+    <span class="label">SPD</span><span class="val" id="spd-val">0.0</span><span class="unit">m/s</span>
+    <div id="badge-row">
+      <span id="rec-badge"><span id="rec-dot"></span>REC <span id="frame-count">001</span></span>
+      <span id="auto-badge">AUTOPILOT</span>
     </div>
   </div>
-</section>
-
-<section class="acc-item" data-acc>
-  <button class="acc-header" data-acc-toggle>
-    <span class="num">第２部</span>
-    <span class="title">移行計画を立てる</span>
-    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-  </button>
-  <div class="acc-panel">
-    <div class="acc-panel-inner">
-<p>期限が決まっている以上、行き当たりばったりで進めるのは危険だと考え、着手前に計画書を作りました。作成日から数えて実質二週間ほどしかない期限でした。<br>Claude Code に相談しながら、現状の整理・技術選定・作業順序・想定される落とし穴を、一つの文書にまとめていきました。以下は、その計画段階で分かったことの記録です。</p>
-
-<h3>2-1. ドメインとサーバーは別契約、という基本</h3>
-
-<p>まず前提として、「ドメイン」と「サーバー（ホスティング先）」は、まったく別の契約です。<br>インターネット上のサーバーは <code>203.0.113.25</code> のような「 IP アドレス」で区別されていますが、人間が毎回この数字を覚えるのは大変なので、 <code>pyx.co.jp</code> のような「ドメイン名」を使います。この二つを結びつける、インターネット全体の電話帳にあたる仕組みが <strong>DNS (Domain Name System)</strong> です。</p>
-
-<div class="diagram-box">
-<svg viewBox="0 0 680 380" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <marker id="arrow-d3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#2f6f4f"/>
-    </marker>
-  </defs>
-  <style>
-    .d3node { fill: #ffffff; stroke: #2f6f4f; stroke-width: 2; }
-    .d3node-alt { fill: #e7f2ec; stroke: #2f6f4f; stroke-width: 2; }
-    .d3label { font-family: sans-serif; font-size: 15px; fill: #2b2a28; text-anchor: middle; }
-    .d3sub { font-family: sans-serif; font-size: 12px; fill: #6b6863; text-anchor: middle; }
-    .d3arrow-label { font-family: sans-serif; font-size: 12px; fill: #2f6f4f; text-anchor: middle; }
-    .d3flow { stroke: #2f6f4f; stroke-width: 2; fill: none; marker-end: url(#arrow-d3); }
-  </style>
-
-  <rect x="30" y="40" width="150" height="70" rx="12" class="d3node"/>
-  <text x="105" y="70" class="d3label">ブラウザ</text>
-  <text x="105" y="90" class="d3sub">（あなたのＰＣ・スマホ）</text>
-
-  <rect x="270" y="40" width="150" height="70" rx="12" class="d3node-alt"/>
-  <text x="345" y="70" class="d3label">DNS サーバー</text>
-  <text x="345" y="90" class="d3sub">（ドメインの電話帳）</text>
-
-  <rect x="500" y="40" width="150" height="70" rx="12" class="d3node"/>
-  <text x="575" y="70" class="d3label">Web サーバー</text>
-  <text x="575" y="90" class="d3sub">（ GitHub Pages 等）</text>
-
-  <path d="M180,60 L268,60" class="d3flow"/>
-  <text x="224" y="45" class="d3arrow-label">①この住所の IP は？</text>
-
-  <path d="M270,90 L182,90" class="d3flow"/>
-  <text x="224" y="120" class="d3arrow-label">②この IP です</text>
-
-  <path d="M180,150 L498,150" class="d3flow"/>
-  <text x="345" y="135" class="d3arrow-label">③その IP 宛にページをください（ HTTP リクエスト）</text>
-
-  <path d="M500,180 L182,180" class="d3flow"/>
-  <text x="345" y="210" class="d3arrow-label">④ HTML ファイルなどを返す</text>
-
-  <rect x="30" y="240" width="620" height="110" rx="12" fill="#f4f1ea" stroke="#e4e0d8"/>
-  <text x="50" y="270" style="text-anchor:start;font-family:sans-serif;font-size:15px;fill:#2b2a28;font-weight:bold">⑤ブラウザが HTML/CSS/JS を解釈して画面に描画</text>
-  <text x="50" y="300" style="text-anchor:start;font-family:sans-serif;font-size:12px;fill:#6b6863">→ 静的サイトでは、④で返すファイルが最初から完成している</text>
-  <text x="50" y="325" style="text-anchor:start;font-family:sans-serif;font-size:12px;fill:#6b6863">→ ①と②の DNS 問い合わせは一定時間キャッシュ（記憶）され、毎回は発生しない</text>
-</svg>
-</div>
-<p class="caption">図２： URL を入力してからページが表示されるまでの流れ</p>
-
-<p><code>pyx.co.jp</code> の場合、ドメインの登録先とレンタルサーバーの契約先はどちらも同じ事業者（ XServer ）でした。同じ会社に見えても、社内では「ドメイン契約」と「サーバー契約」という別々の契約として管理されています。ドメイン契約は 2027 年まで支払い済みで確保されており、サーバー契約とは無関係に存続する状態でした。</p>
-
-<h3>2-2. 最大の論点：サーバー契約をやめても、 DNS は生き残るか</h3>
-
-<p>計画段階でいちばん時間を使ったのが、この一点でした。<strong>レンタルサーバーの契約をやめたとき、ドメインの DNS 設定を編集する手段と、ドメイン名から IP アドレスを引く「名前解決」の仕組みは、どうなるのか。</strong></p>
-
-<p>これは類推だけでは確定できない問題でした。 XServer の公式案内には、期限を超過したサーバーアカウントについて「凍結が行われるとホームページへのアクセスやメールの送受信が行えなくなります」とだけ書かれており、「 DNS レコードの管理ができなくなる」とは明記されていませんでした。<br>一方で、 XServer には管理画面が二種類あり、役割が分かれていることも分かりました。</p>
-
-<table>
-  <tr><th>管理画面</th><th>役割</th><th>紐づく契約</th></tr>
-  <tr><td>サーバーパネル</td><td>サーバーの各種設定（メールアカウント発行など）</td><td>サーバー契約</td></tr>
-  <tr><td>XServer アカウント<br>（ドメイン契約管理ページ）</td><td>契約情報の確認・支払い、ネームサーバーの管理、 DNS レコードの管理、 Whois 情報の管理</td><td>ドメイン契約</td></tr>
-</table>
-
-<p>DNS レコードの管理は、サーバーパネルではなく、ドメイン契約に紐づく「 XServer アカウント」側の機能でした。<br>さらに、 XServer にはドメインだけを単独契約する利用者も存在し、そうした利用者も同じネームサーバー群を使っていることが公式マニュアルから読み取れました。サーバー契約を一度も持たない利用者がこの仕組みを使えている以上、サーバー契約の有無が DNS 配信の前提条件になっているとは考えにくいと判断できました。</p>
-
-<p>ただし、これは状況証拠の積み重ねにすぎません。実際に <code>dig</code> コマンドで <code>pyx.co.jp</code> の現在のネームサーバーを調べたところ、次のように、サーバー契約者専用のネームサーバーが設定されていることが分かりました。</p>
-
-<pre><code>$ dig +short NS pyx.co.jp
-ns1.xserver.jp.  ns2.xserver.jp.  ns3.xserver.jp.
-ns4.xserver.jp.  ns5.xserver.jp.</code></pre>
-
-<p>この 5 台は、レンタルサーバー契約者専用のネームサーバーです。<strong>このままではサーバー契約が凍結されると同時に、 DNS の管理も名前解決も同時に失う可能性がある</strong>と分かりました。憶測で進めるにはリスクが大きすぎたため、最終的には XServer のサポートへ直接問い合わせ、書面で回答を得ました。回答の要点は次の二点でした。</p>
-
-<div class="callout">
-  <strong>サポート回答の要点</strong><br>
-  1. ドメインのみ契約している状態でも、ネームサーバーを「 Xserver Domain 」（サーバー契約に紐づかない、ドメイン契約側の DNS 管理機能）に設定すれば、引き続き DNS レコードの編集・管理が可能。<br>
-  2. ns1.xserver.jp 〜 ns5.xserver.jp による名前解決は、レンタルサーバー契約者専用であり、サーバー契約が凍結されると使えなくなる。したがって、凍結前にネームサーバーを Xserver Domain へ切り替えておく必要がある。
 </div>
 
-<p>この回答により、作業の前提が一点変わりました。<strong>サーバー契約が凍結される前に、ネームサーバーを Xserver Domain へ切り替える作業が、独立した必須工程として加わった</strong>のです（詳しくは第３部）。</p>
-
-<div class="diagram-box">
-<svg viewBox="0 0 680 230" xmlns="http://www.w3.org/2000/svg">
-  <style>
-    .d5box { fill: #ffffff; stroke: #2f6f4f; stroke-width: 2; }
-    .d5box-alt { fill: #e7f2ec; stroke: #2f6f4f; stroke-width: 2; }
-    .d5box-warn { fill: #fff4e5; stroke: #e0a94b; stroke-width: 2; }
-    .d5lab { font-family: sans-serif; font-size: 13px; fill: #2b2a28; text-anchor: middle; }
-    .d5sub { font-family: sans-serif; font-size: 10px; fill: #6b6863; text-anchor: middle; }
-    .d5ttl { font-family: sans-serif; font-size: 12px; font-weight: bold; fill: #2f6f4f; }
-    .d5bad { font-family: sans-serif; font-size: 12px; fill: #a76a12; text-anchor: middle; }
-    .d5ok { font-family: sans-serif; font-size: 12px; fill: #2f6f4f; text-anchor: middle; }
-  </style>
-
-  <rect x="0" y="0" width="680" height="230" rx="8" fill="#ffffff"/>
-
-  <text x="20" y="24" class="d5ttl">切り替え前：二つともサーバー契約に紐づいている</text>
-  <rect x="20" y="40" width="145" height="42" rx="8" class="d5box"/>
-  <text x="92" y="60" class="d5lab">ドメイン契約</text>
-  <text x="92" y="75" class="d5sub">（支払い済み・継続）</text>
-  <rect x="180" y="40" width="145" height="42" rx="8" class="d5box-warn"/>
-  <text x="252" y="60" class="d5lab">サーバー契約</text>
-  <text x="252" y="75" class="d5sub">（これをやめたい）</text>
-  <path d="M252,82 L252,97 M92,97 L252,97 M92,97 L92,112 M252,97 L252,112" fill="none" stroke="#e0a94b" stroke-width="2"/>
-  <rect x="20" y="112" width="145" height="50" rx="8" class="d5box-warn"/>
-  <text x="92" y="133" class="d5lab">レコードの編集</text>
-  <text x="92" y="149" class="d5sub">（設定を書き換える）</text>
-  <rect x="180" y="112" width="145" height="50" rx="8" class="d5box-warn"/>
-  <text x="252" y="133" class="d5lab">名前解決</text>
-  <text x="252" y="149" class="d5sub">（名前から IP を引く）</text>
-  <text x="172" y="188" class="d5bad">✕　サーバー契約を終了すると、</text>
-  <text x="172" y="206" class="d5bad">編集する手段も名前解決も同時に失う</text>
-
-  <line x1="340" y1="10" x2="340" y2="220" stroke="#e4e0d8" stroke-dasharray="4 4"/>
-
-  <text x="355" y="24" class="d5ttl">切り替え後：二つともドメイン契約に紐づいている</text>
-  <rect x="355" y="40" width="145" height="42" rx="8" class="d5box-alt"/>
-  <text x="427" y="60" class="d5lab">ドメイン契約</text>
-  <text x="427" y="75" class="d5sub">（支払い済み・継続）</text>
-  <rect x="515" y="40" width="145" height="42" rx="8" class="d5box-warn"/>
-  <text x="587" y="60" class="d5lab">サーバー契約</text>
-  <text x="587" y="75" class="d5sub">（やめてよい）</text>
-  <path d="M427,82 L427,97 M427,97 L587,97 M587,97 L587,112 M427,97 L427,112" fill="none" stroke="#2f6f4f" stroke-width="2"/>
-  <rect x="355" y="112" width="145" height="50" rx="8" class="d5box-alt"/>
-  <text x="427" y="133" class="d5lab">レコードの編集</text>
-  <text x="427" y="149" class="d5sub">（設定を書き換える）</text>
-  <rect x="515" y="112" width="145" height="50" rx="8" class="d5box-alt"/>
-  <text x="587" y="133" class="d5lab">名前解決</text>
-  <text x="587" y="149" class="d5sub">（名前から IP を引く）</text>
-  <text x="507" y="188" class="d5ok">○　サーバー契約を終了しても、</text>
-  <text x="507" y="206" class="d5ok">編集する手段も名前解決も残る</text>
-</svg>
-</div>
-<p class="caption">図３： DNS にまつわる二つの機能が、どちらの契約に紐づいているか</p>
-
-<h3>2-3. ホスティング先の選定： GitHub Pages を採用</h3>
-
-<p>静的サイトの置き場所として、 GitHub Pages と Cloudflare Pages を比較しました。決め手は費用ではなく、<strong>変更点を最小化できるかどうか</strong>でした。</p>
-
-<table>
-  <tr><th>比較項目</th><th>GitHub Pages</th><th>Cloudflare Pages</th></tr>
-  <tr><td>Apex ドメイン（ <code>pyx.co.jp</code> 自体）への設定</td><td>A レコード 4 件を追加するだけ。 DNS の管理主体を変更する必要がない</td><td>真価を発揮するには、通常ドメインのネームサーバーを Cloudflare 自体に切り替える構成が推奨される</td></tr>
-  <tr><td>費用</td><td>無料</td><td>無料プランでもほぼ賄えるが、カスタムドメイン数などに制限がある</td></tr>
-  <tr><td>HTTPS</td><td>リポジトリ設定で「 Enforce HTTPS 」を有効化。反映まで最大 24 時間程度</td><td>自動発行・自動更新</td></tr>
-</table>
-
-<p>すでに 2-2 で、ネームサーバーを Xserver Domain へ切り替えるという変更を一つ抱えていました。ここにさらに「ネームサーバーを Cloudflare へ切り替える」という、もう一段構成の異なる変更を重ねる必然性はないと判断しました。 <strong>2026-08-31 という動かせない期限の下では、変更点を最小化するほうが安全</strong>という考え方です。<br>GitHub Pages なら、 Xserver Domain 側の DNS レコード設定画面で A レコードを追加するだけで完結します。</p>
-
-<p>あわせて、ビルドツール（静的サイトジェネレーター）も導入しないことにしました。公開する内容が「準備中」を示す一枚のページである以上、ビルド工程を挟む理由がなかったためです。依存パッケージのない、単一の <code>index.html</code> として作成する方針にしました。<br>リポジトリは新規に <code>pyx-site</code> という名前で作成し、公開範囲は Public （公開）としました。無料プランでは、 Private （非公開）のリポジトリで GitHub Pages を有効化できないと、この段階で判明したためです。</p>
-
-<h3>2-4. 全体の実施順序</h3>
-
-<p>サーバー契約の期限（ 2026-08-31 ）から逆算し、作業を六つの工程に分けました。上から順に実行すれば、前提を満たさないまま先に進んでしまうことがない並びです。</p>
-
-<table>
-  <tr><th>工程</th><th>内容</th></tr>
-  <tr><td>工程 1</td><td>移行前の保全： DNS レコードのバックアップ</td></tr>
-  <tr><td>工程 2</td><td>ネームサーバーを Xserver Domain へ切り替える</td></tr>
-  <tr><td>工程 3</td><td>サイト構築と、切替前の完成確認</td></tr>
-  <tr><td>工程 4</td><td>旧 WordPress 環境の削除</td></tr>
-  <tr><td>工程 5</td><td>DNS 切替（ GitHub Pages への向け先変更）</td></tr>
-  <tr><td>工程 6</td><td>切替後の検証</td></tr>
-</table>
-
-<p>工程 1 と工程 2 は、 DNS に一切手を触れる前後の関係にあるため、必ずこの順で行う必要があります。一方、工程 2 （ネームサーバー切替）と工程 3 （サイト構築）は互いに独立しているため、並行して進めることができました。</p>
-
-<h3>2-5. 順序を入れ替えてはいけない四箇所</h3>
-
-<p>作業の多くは前後させても支障ありませんが、次の四つは技術上・安全上の理由から順序が固定されます。計画段階でここを洗い出しておいたことが、後の工程で実際に役立ちました。</p>
-
-<table>
-  <tr><th>この順序</th><th>なぜ入れ替えてはいけないか</th></tr>
-  <tr><td>現在の DNS 設定を控える<br>→ ネームサーバーを切り替える</td><td>切り替えでレコードが引き継がれなかった場合、控えが無ければ何も復元できない</td></tr>
-  <tr><td>標準 URL で動作を確認する<br>→ Custom domain を設定する</td><td>Custom domain を設定すると、標準 URL は独自ドメインへ転送されるようになり、確認手段として使えなくなる</td></tr>
-  <tr><td>GitHub 側で Custom domain を設定する<br>→ DNS レコードを設定する</td><td>先に DNS だけを向けると、そのドメインで第三者にサイトをホストされる状態が生じうる（ GitHub 公式が明記している）</td></tr>
-  <tr><td>新しいサイトの完成を確認する<br>→ 旧環境を削除する</td><td>削除後は元に戻せない</td></tr>
-</table>
-    </div>
-  </div>
-</section>
-
-<section class="acc-item" data-acc>
-  <button class="acc-header" data-acc-toggle>
-    <span class="num">第３部</span>
-    <span class="title">実際の移行作業（工程順の記録）</span>
-    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-  </button>
-  <div class="acc-panel">
-    <div class="acc-panel-inner">
-<p>ここからが本編です。計画どおりに進んだ部分と、進まなかった部分の両方を、工程の順に記します。</p>
-
-<h3>3-1. 工程 1 ：移行前の保全、 DNS レコードのバックアップ</h3>
-
-<p>DNS に最初の変更を加える前に、現在の設定値を全件控えました。旧 WordPress のコンテンツ自体は移行しないため保全対象外ですが、 DNS 設定は失うと取り返しがつかないため、最優先で控える工程です。</p>
-
-<pre><code>dig +short NS pyx.co.jp
-dig +short A pyx.co.jp
-dig +short A www.pyx.co.jp
-dig +short MX pyx.co.jp
-dig +short TXT pyx.co.jp</code></pre>
-
-<table>
-  <tr><th>タイプ</th><th>ホスト名</th><th>値</th></tr>
-  <tr><td>NS</td><td>pyx.co.jp</td><td>ns1 〜 ns5.xserver.jp</td></tr>
-  <tr><td>A</td><td>pyx.co.jp</td><td>（旧サーバーの IP アドレス）</td></tr>
-  <tr><td>A</td><td>www.pyx.co.jp</td><td>（ apex と同一）</td></tr>
-  <tr><td>MX</td><td>pyx.co.jp</td><td>0 pyx.co.jp</td></tr>
-  <tr><td>TXT</td><td>pyx.co.jp</td><td>SPF レコード（メール送信元の指定）</td></tr>
-</table>
-
-<p>MX と TXT （ SPF ）の 2 件は、「全レコードを漏れなく控える」という保全要件を満たすために機械的に記録したものです。 <code>pyx.co.jp</code> のメールアドレスは使用したことがなく、今後も使う予定がなかったため、メール関連の移行・保全そのものは検討対象から外しました。</p>
-
-<p>あわせて、 XServer アカウント（ドメイン契約管理ページ）にログインし、 DNS レコード設定画面をスクリーンショットで保存しました。 <code>dig</code> の結果は管理画面上の表示と完全には一致しない場合があるため、両方を控えておくのが安全です。控えは Git リポジトリとは別の、ローカルの控え用フォルダに保存しました。<br>この控えは、後の工程で実際に役に立ちました。ただし「戻すため」ではなく、「戻さなくてよいと判断するため」に使いました。詳しくは次項に記します。</p>
-
-<h3>3-2. 工程 2 ：ネームサーバーを Xserver Domain へ切り替える</h3>
-
-<p>XServer アカウントの管理画面で「ネームサーバーの設定」を開き、ネームサーバーを Xserver Domain （サーバー契約に依存しない、ドメイン契約側の標準 DNS 管理機能）に切り替えました。切り替え自体は、管理画面上の一操作で完了します。</p>
-
-<p>切り替えの反映確認は、必ず権威サーバーへ直接おこないました。</p>
-
-<pre><code># 委任情報（レジストリ側）
-dig @a.dns.jp pyx.co.jp NS +norecurse
-# 切替後の権威サーバーが実際に何を持っているか
-dig @ns1.xdomain.ne.jp pyx.co.jp A</code></pre>
-
-<p>ここで想定外のことが起きました。<strong>切り替えは成功しましたが、それまで設定されていた DNS レコードは、一件も引き継がれませんでした。</strong></p>
-
-<table>
-  <tr><th>レコード</th><th>切替前</th><th>切替後の Xserver Domain 側</th></tr>
-  <tr><td>NS</td><td>ns1 〜 5.xserver.jp</td><td>ns1 〜 3.xdomain.ne.jp （自動生成）</td></tr>
-  <tr><td>SOA</td><td>—</td><td>自動生成</td></tr>
-  <tr><td>A （ pyx.co.jp ）</td><td>設定あり</td><td>無し</td></tr>
-  <tr><td>A （ www.pyx.co.jp ）</td><td>設定あり</td><td>無し</td></tr>
-  <tr><td>MX</td><td>設定あり</td><td>無し</td></tr>
-  <tr><td>TXT （ SPF ）</td><td>設定あり</td><td>無し</td></tr>
-</table>
-
-<p>紛らわしいことに、切り替え後の管理画面にも NS ×3 と SOA の 4 行が並んで見えました。しかしこれらはゾーン（レコードを収める器）を成立させるための構造的なレコードにすぎず、実際に使われる値（ A ・ CNAME ・ MX ・ TXT ）は 0 件でした。<strong>画面に行が見えていることと、設定が引き継がれていることは、同じではありません。</strong></p>
-
-<h4>採った対応：ゾーンを空のまま進める</h4>
-
-<p>失われたレコードは復元せず、空のまま次の工程へ進む判断を採りました。理由は次の三点です。</p>
-
-<ol>
-  <li>控えていた値は、いずれ捨てるものだった。 A レコードの向き先は凍結予定の旧サーバーを指し、 MX はメール対象外だった</li>
-  <li>復元してから後の工程で消す、という往復を作らずに済む。変更する箇所が少ないほど、間違える箇所も少ない</li>
-  <li>結果として、後の DNS 切替（工程 5 ）が「既存レコードの整理を伴う書き換え」から「純粋な追加」に変わり、消し忘れによる証明書発行の失敗というリスクが構造的に消えた</li>
-</ol>
-
-<p>ここで役に立ったのが、 3-1 で控えた値でした。<strong>「何が失われたのか」が分からなければ、失って構わないかどうかも判断できません。</strong>控えを取っていたからこそ、「これは捨ててよい値だ」と、根拠を持って判断できました。</p>
-
-<p>この判断に伴う副作用として、 A レコードが存在しないため、キャッシュが切れ次第 <code>pyx.co.jp</code> は名前解決できなくなりました。二年近く利用されていないサイトだったため実害はないと判断しましたが、この影響は 3-4 で改めて触れます。</p>
-
-<h4>反映が安定するまでの経過</h4>
-
-<p>切り替え直後は、ふだんの調べ方（リゾルバ経由）で確認するたびに、結果が異なりました。</p>
-
-<table>
-  <tr><th>時刻</th><th>照会先</th><th>結果</th></tr>
-  <tr><td>12:13</td><td>リゾルバ</td><td>www と TXT が消失して見える</td></tr>
-  <tr><td>12:19</td><td>リゾルバ</td><td>TXT が復活して見える</td></tr>
-  <tr><td>12:25</td><td>リゾルバ</td><td>www も復活して見える（＝旧ネームサーバーのキャッシュ）</td></tr>
-  <tr><td>12:35</td><td>権威サーバー直撃</td><td>ゾーンは空。以後この判定は一度も揺れなかった</td></tr>
-  <tr><td>翌日</td><td>権威 3 台＋リゾルバ全て</td><td>一致。 apex は応答 0 件、 www は該当ドメイン無し</td></tr>
-</table>
-
-<p>原因は技術的な障害ではなく、<strong>誰に問い合わせているか</strong>でした。ふだんの調べ方は途中のキャッシュを経由するため、変更直後は古い情報と新しい情報が混ざります。一方、そのドメインの設定を実際に保持している権威サーバーへ直接尋ねると、答えは最初から一貫していました。</p>
-
-<table>
-  <tr><th>調べ方</th><th>分かること</th><th>キャッシュの影響</th></tr>
-  <tr><td>権威サーバーへ直接<br><code>dig @ns1.xdomain.ne.jp …</code></td><td>設定の実態。ゾーンに何が書かれているか</td><td>受けない。変更した直後から確認できる</td></tr>
-  <tr><td>ふだんの調べ方<br><code>dig …</code>（ @ なし）</td><td>世間から見えている状態。浸透が完了したか</td><td>受ける。変更直後は旧情報と新情報が混在する</td></tr>
-</table>
-
-<div class="verdict">設定を確かめたいときは、待つのではなく、聞く相手を変える。</div>
-
-<p>これが、この移行を通じて得たいちばん実用的な教訓でした。設定が正しいかどうかは、変更した直後から権威サーバーに聞けば分かります。時間を置く必要はありません。<br>さらに紛らわしいのは、「レコードが存在しない」という否定の答えもキャッシュされることです（ネガティブキャッシュ）。設定した直後にふだんの方法で調べると「まだ無い」と表示されるのが普通で、これが一時間ほど続くこともあります。ここで設定を疑って触り直すと、正しかったはずの設定を壊しかねません。</p>
-
-<h3>3-3. 工程 3 ：サイトを構築する</h3>
-
-<p>作業は Mac 上で、 Claude Code に指示を出しながら進めました。新規リポジトリ <code>pyx-site</code> を作成し、「準備中」であることを示す一枚物のページを、プレビュー URL で確認できる状態にするまでが、この工程の範囲です。</p>
-
-<table>
-  <tr><th>項目</th><th>内容</th></tr>
-  <tr><td>構成</td><td>依存パッケージなしの単一 <code>index.html</code> （ CSS/JavaScript を内包）。ビルド工程は無し</td></tr>
-  <tr><td>表示内容</td><td><code>PYX.CO.JP</code> と、 “Something new is taking flight.” の一言。都会の空を表現したビジュアルの中を、矢印キーまたはマウスポインタで操作できるドローンが飛ぶ、インタラクティブな演出</td></tr>
-  <tr><td>対応端末</td><td>PC でのキーボード・マウス操作を前提とし、スマートフォン幅での表示も別途確認</td></tr>
-</table>
-
-<p>ページ全体を一枚の HTML ファイルに収めたのは、更新の対象を増やさないためです。凝った内容にするほど、後で「移す」「保守する」対象が増えます。まずは表示させることを優先し、内容は後からいくらでも作り込める形にしました。</p>
-
-<p>GitHub Pages の設定は、リポジトリの Settings → Pages で、公開するブランチ（ <code>main</code> ）とフォルダ（ルート）を選ぶだけです。数分待つと、標準の <code>github.io</code> URL でサイトが公開されます。<strong>この時点ではまだ独自ドメイン（ Custom domain ）を設定しません。</strong>設定すると標準 URL が独自ドメインへ転送されるようになり、動作確認に使えなくなるためです（第２部 2-5 ）。</p>
-
-<p>確認は、ローカル（手元のパソコン）と、 GitHub Pages のプレビュー URL の、二段階でおこないました。順番に確認することで、問題が起きたときに「ファイル自体の不具合」か「配信設定の不具合」かを切り分けやすくなります。</p>
-
-<div class="check">
-  <strong>次の工程（旧環境の削除）に進んでよい条件</strong>
-  <ul>
-    <li>☐ ローカルと GitHub Pages のプレビュー URL の両方で、ページが正しく表示される</li>
-    <li>☐ 矢印キーでドローンが操作でき、加速・減速・画面端での挙動が意図どおり</li>
-    <li>☐ マウスポインタでもドローンが操作でき、キー操作からの切り替えが自然</li>
-    <li>☐ スマートフォン幅での表示を確認済み（レイアウトが崩れない、または操作不可である旨が破綻なく表示される）</li>
-    <li>☐ 主要ブラウザ（ Chrome ・ Safari 等）で表示・動作を確認済み</li>
-    <li>☐ タイトルなど、基本的なメタ情報が意図どおりになっている</li>
-  </ul>
+<div id="drone">
+  <svg viewBox="0 0 100 100">
+    <g id="drone-body">
+      <line x1="20" y1="20" x2="80" y2="80" stroke="#ffffff" stroke-width="4"/>
+      <line x1="80" y1="20" x2="20" y2="80" stroke="#ffffff" stroke-width="4"/>
+      <circle cx="50" cy="50" r="14" fill="#000000" stroke="#f2f2f2" stroke-width="2.5"/>
+      <circle id="camera-lens" cx="50" cy="50" r="4" fill="#f2f2f2"/>
+      <g class="prop"><circle cx="20" cy="20" r="11" fill="none" stroke="#f2f2f2" stroke-width="2.5" opacity="0.75"/></g>
+      <g class="prop"><circle cx="80" cy="20" r="11" fill="none" stroke="#f2f2f2" stroke-width="2.5" opacity="0.75"/></g>
+      <g class="prop"><circle cx="20" cy="80" r="11" fill="none" stroke="#f2f2f2" stroke-width="2.5" opacity="0.75"/></g>
+      <g class="prop"><circle cx="80" cy="80" r="11" fill="none" stroke="#f2f2f2" stroke-width="2.5" opacity="0.75"/></g>
+    </g>
+  </svg>
 </div>
 
-<p>次の工程で旧環境を削除すると、後戻りができなくなります（ 3-4 ）。この確認だけが、削除に進む前の唯一の安全策になるため、満たしていない項目があれば、先を急がずここで直しました。</p>
-
-<h3>3-4. 工程 4 ：旧 WordPress 環境を削除する</h3>
-
-<p>3-3 の完成条件をすべて満たしたことを確認したうえで、サーバー内の WordPress のデータベースとファイル一式を削除しました。<strong>削除するのは WordPress のデータのみで、サーバー契約自体の解約は行いません。</strong>契約は期限日まで通常どおり継続し、自動更新が設定されていないため、期限日に自然に凍結される見込みです。</p>
-
-<p>この工程には、二つの影響がありました。</p>
-
-<table>
-  <tr><th>影響</th><th>内容</th></tr>
-  <tr><td>ロールバック手段が失われる</td><td>削除後は、 A レコードを旧サーバーへ戻しても、表示すべき中身がもう存在しない。空のページかエラーが表示されるだけになる</td></tr>
-  <tr><td><code>pyx.co.jp</code> は既に無反応になっていた</td><td>工程 2 でゾーンを空のまま進める判断を採ったため（ 3-2 ）、 A レコードが存在せず、この工程を待たずに <code>pyx.co.jp</code> は既に名前解決できない状態にあった</td></tr>
-</table>
-
-<p>当初は「削除から DNS 切替までの間だけ、表示が乱れる」と想定していましたが、実際にはその期間が前倒しで始まっていた形です。二年近く利用されていないサイトだったため実害はないと判断しましたが、削除の成否をブラウザで確認できなくなったため、確認手順はサーバーパネル経由に切り替えました。<br>後戻りが存在しない作業では、安全策は「事前の確認」に一本化されます。</strong>本計画では、削除より後でロールバックする方法を用意するのではなく、削除に進む前の完成確認（ 3-3 ）に安全性のすべてを預ける設計にしました。</p>
-
-<h3>3-5. 工程 5 ： DNS を GitHub Pages へ向ける</h3>
-
-<p>まず GitHub 側で Custom domain を設定し、そのあとで DNS レコードを設定する。この順序を守りました（第２部 2-5 ）。 GitHub 公式ドキュメントは、 DNS プロバイダ側でドメインを向ける前に GitHub Pages 側へカスタムドメインを追加するよう明記しています。先に DNS だけを向けてしまうと、そのドメインで第三者が自分のサイトをホストできてしまう状態が生じうるためです。</p>
-
-<p>リポジトリの Settings → Pages にある「 Custom domain 」欄に <code>pyx.co.jp</code> を入力して保存すると、直下に「 DNS Check in progress 」と表示されます。この時点ではまだ DNS 側を設定していないため、確認は失敗表示のままですが、想定どおりで異常ではありません。<br>保存と同時に、リポジトリ直下に <code>CNAME</code> ファイル（中身は <code>pyx.co.jp</code> の一行のみ）が GitHub 側で自動生成・コミットされました。</p>
-
-<p>続いて、 Xserver Domain 側の DNS レコード設定画面で、次の 5 件を追加しました。工程 2 でゾーンを空のまま進めていたため（ 3-2 ）、これは削除・書き換えを伴わない、純粋な追加作業でした。</p>
-
-<table>
-  <tr><th>タイプ</th><th>ホスト名</th><th>値</th></tr>
-  <tr><td>A</td><td>@ （ pyx.co.jp 自体）</td><td>185.199.108.153</td></tr>
-  <tr><td>A</td><td>@</td><td>185.199.109.153</td></tr>
-  <tr><td>A</td><td>@</td><td>185.199.110.153</td></tr>
-  <tr><td>A</td><td>@</td><td>185.199.111.153</td></tr>
-  <tr><td>CNAME</td><td>www</td><td>（ GitHub のユーザー名） .github.io</td></tr>
-</table>
-
-<p>GitHub Pages 向けの A レコード 4 件は、 GitHub の公式ドキュメントに記載されている固定値です。 <code>www.pyx.co.jp</code> でアクセスした場合も <code>pyx.co.jp</code> へ転送されるよう、あわせて CNAME レコードも設定しました（この CNAME の値にはリポジトリ名を含めません）。</p>
-
-<p>反映確認は、ここでも二段階でおこないました。設定した直後に権威サーバーへ直接確認し、三台とも同じ答えを返すことを確認したうえで、時間を置いてからふだんの調べ方で世間から見えるようになったかを確認しました。</p>
-
-<pre><code># 設定が正しいか（権威サーバーへ直接、待つ必要なし）
-dig @ns1.xdomain.ne.jp pyx.co.jp A
-dig @ns2.xdomain.ne.jp pyx.co.jp A
-dig @ns3.xdomain.ne.jp pyx.co.jp A
-dig @ns1.xdomain.ne.jp www.pyx.co.jp CNAME
-
-# 世間から見えるようになったか（時間を置いてから）
-dig pyx.co.jp A
-curl -I https://pyx.co.jp</code></pre>
-
-<p>権威サーバー側の答えが揃っていることを確認できたため、あとは時間の問題でした。 GitHub の Pages 設定画面が「 DNS Check successful 」（緑のチェックマーク）に変わったのを確認したあと、「 Enforce HTTPS 」を有効化しました。 SSL 証明書の自動発行には最大 1 時間程度、反映には最大 24 時間程度かかることがあるとされていますが、今回は大きな遅れなく反映されました。</p>
-
-<h3>3-6. 工程 6 ：切替後の検証</h3>
-
-<p>最後に、独自ドメイン経由での表示を確認しました。</p>
-
-<div class="check">
-  <ul>
-    <li>☐ <code>https://pyx.co.jp</code> で新しいページが表示される</li>
-    <li>☐ <code>http://pyx.co.jp</code> が <code>https://pyx.co.jp</code> へ自動転送される</li>
-    <li>☐ <code>https://www.pyx.co.jp</code> が正しく転送・表示される</li>
-    <li>☐ ブラウザで証明書エラーが出ない（ HTTPS が有効）</li>
-    <li>☐ 独自ドメイン経由でも、キー操作・マウス操作が問題なく動作する</li>
-    <li>☐ スマートフォンからのアクセスでも表示が破綻しない</li>
-  </ul>
-</div>
-
-<p>ここまでで、当初の目的だった「サーバー契約期限までに、旧サイトの表示に依存しない形へ移行する」ことは達成できました。</p>
-
-<table>
-  <tr><th>確認事項</th><th>状態</th></tr>
-  <tr><td>ネームサーバーの Xserver Domain への切替</td><td><span class="pill done">済み</span></td></tr>
-  <tr><td>旧 WordPress 環境の削除</td><td><span class="pill done">済み</span></td></tr>
-  <tr><td>GitHub Pages への DNS 切替・ HTTPS 化</td><td><span class="pill done">済み</span></td></tr>
-  <tr><td>ドメイン更新料の反映確認（ whois ）</td><td><span class="pill pending">要確認</span></td></tr>
-</table>
-
-<p>最後の一点だけ、この記事の執筆時点ではまだ確認できていません。<br>ドメインの登録有効期限は、支払いが済んでいても、レジストリへ実際に反映されるまでは古い期限のまま表示されることがあります。更新料は既に支払い済みですが、<strong>更新の反映が正しく行われたかどうかは、期限が明けたあとに、あらためて自分で確認するつもりです。</strong>ここが失敗していると、ドメインそのものを失いかねません。移行作業の達成感とは別に、最後まで気を抜けない一点として記録しておきます。</p>
-<p>ロールバックという選択肢はもうありません。工程 4 で WordPress のデータベースとファイルを削除したため、「 DNS を旧サーバーへ戻せば旧サイトが復活する」という形のロールバックはこの時点で、もはやできません。今後もし独自ドメインの表示に問題が見つかった場合の対応は、旧サイトへの復元ではなく、以下のいずれかになります。</p>
-
-<ol>
-  <li>ページの内容・動作を <code>index.html</code> ごと直接修正して push する</li>
-  <li>権威サーバーへの確認で「設定は正しいが未反映なだけ」かを切り分ける</li>
-</ol>
-    </div>
-  </div>
-</section>
-
-<section class="acc-item" data-acc>
-  <button class="acc-header" data-acc-toggle>
-    <span class="num">第４部</span>
-    <span class="title">振り返り：得られた教訓</span>
-    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-  </button>
-  <div class="acc-panel">
-    <div class="acc-panel-inner">
-<p>作業を終えて振り返ると、技術的な難所そのものより、<strong>「別々の契約の、どちらに何が紐づいているかを見誤らないこと」</strong>と、<strong>「後戻りできない工程の前に、確認をどれだけ積んでおけるか」</strong>の二点に、ほとんどの緊張が集まっていたように思います。</p>
-
-<ul>
-  <li>サーバー契約をやめる前に、 DNS の管理と名前解決がどの契約に紐づいているかを確認する。憶測で進めず、事業者に直接問い合わせる（第２部 2-2 ）</li>
-  <li>DNS に触る前に、現在の設定を全件控える。使わないと分かっていても、「何を失うかを知る」ためだけに価値がある（第３部 3-1 ）</li>
-  <li>ネームサーバーを切り替えても、既存のレコードが引き継がれるとは限らない。画面に行が見えることと、設定が引き継がれていることは別（第３部 3-2 ）</li>
-  <li>設定を確かめたいときは、待つのではなく、聞く相手を変える。権威サーバーに直接聞けば、変更した直後から答えが分かる（第３部 3-2 ）</li>
-  <li>後戻りが存在しない工程（今回で言えば旧環境の削除）の前には、安全策を「事前の完成確認」に一本化する（第３部 3-3 ・ 3-4 ）</li>
-  <li>Custom domain の設定は DNS レコードの設定より先に行う。順序には、思いつきではなく理由がある（第２部 2-5 、第３部 3-5 ）</li>
-</ul>
-
-<p>費用の面では、月々のレンタルサーバー代が無くなり、かかるのはドメインの維持費用だけになりました。これは移行の目的そのものではなく、動いていないサイトから動的な仕組みを取り除いた結果として、後からついてきた副次的な効果です。</p>
-<p>ドメインの管理アカウント、 GitHub のアカウント、それらのパスワードの管理は引き続き必要です。静的サイトはページを配信する部分の攻撃対象を大幅に減らしますが、「公開する権限を持つアカウントを守る」という仕事は残ります。ただしこれは、プラグインを毎月更新し続けるより、ずっと単純な仕事です。</p>
-    </div>
-  </div>
-</section>
-
-<section class="acc-item" data-acc>
-  <button class="acc-header" data-acc-toggle>
-    <span class="num">第５部</span>
-    <span class="title">すべてのサイトが WordPress の上にある必要はない</span>
-    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-  </button>
-  <div class="acc-panel">
-    <div class="acc-panel-inner">
-<p>最後に、この移行の背景にあった、もう少し一般的な話をします。 WordPress は今も、世界中の膨大な数のサイトを支えている、優れたソフトウェアです。編集者が何人もいて、日常的に記事を書き、コメント機能や複雑なワークフローを必要とするサイトにとって、これ以上ないほど強力な選択肢であることは変わりません。</p>
-
-<p>問題は、 WordPress が優れているかどうかではなく、<strong>そのサイトが、実際にその強力さを必要としているかどうか</strong>です。動的なサイトを持つということは、コンテンツを管理するだけでなく、 PHP ・データベース・プラグイン・テーマという、一式のソフトウェア環境を自分の責任で維持し続けるということです。十分に複雑なソフトウェアには脆弱性が見つかるのが常で、その更新作業を引き受け続けることが、動的サイトを運用するということの実態です。</p>
-
-<p>アクセスのたびにページを組み立て直す仕組みと、あらかじめ完成させたファイルをそのまま渡す仕組みには、次のような違いがあります。</p>
-
-<table>
-  <tr><th>観点</th><th>動的サイト（ WordPress 等）</th><th>静的サイト</th></tr>
-  <tr><td>サーバー側の構成</td><td>データベース・ PHP ・常時稼働のプロセス</td><td>HTML ・ CSS ・ JS のファイルのみ</td></tr>
-  <tr><td>攻撃対象</td><td>プラグイン・ログイン画面・データベースへの問い合わせなど広い</td><td>実質的にほぼ無い（配信するだけ）</td></tr>
-  <tr><td>保守の手間</td><td>継続的：更新・パッチ・バックアップ・監視</td><td>サーバー側の保守はほぼ不要</td></tr>
-  <tr><td>更新の主体</td><td>管理画面上での編集（ WYSIWYG ）</td><td>ファイルの書き換え。多少の技術的な慣れが要る</td></tr>
-</table>
-
-<p>もちろん、静的サイトが万能というわけではありません。書き手はテキストファイルやコードに触れることに、ある程度慣れている必要がありますし、コメント欄のような対話的な機能は、外部サービスとの連携が必要になります。多くの個人サイト・会社案内・ポートフォリオ・ドキュメントにとって、これらは小さな代償です。</p>
-
-<p>本当に問うべきは、「 WordPress は良いか悪いか」ではなく、<strong>「そのサイトは、なぜ立ち止まって選ばれないまま、いつも同じ選択をしているのか」</strong>だと思います。何かを公開しようとするとき、次のように自問してみる価値があります。</p>
-
-<div class="check">
-  <ul>
-    <li>☐ 実際に何を公開しようとしていて、それはどのくらいの頻度で変わるか</li>
-    <li>☐ 誰がこのサイトの面倒を見続けるのか、その人はどんな道具なら苦にならないか</li>
-    <li>☐ 本当にその場でのデータベース処理が必要か、それとも文字と画像を表示しているだけか</li>
-    <li>☐ 更新や保守のために、どれだけの手間と緊張を払い続ける覚悟があるか</li>
-  </ul>
-</div>
-
-<p>これらに「大したことはない」と答えられるなら、静的サイトで足りる可能性が高いはずです。<br>考え方の順番を、こう入れ替えるだけです。<br>
-👎「サイトを作りたい」→「 CMS が要る」→「 WordPress を使おう」<br>
-👍「サイトを作りたい」→「実際にどんな機能が要るのか」→「それを最も単純に実現できる仕組みはどれか」</p>
-
-<p><code>pyx.co.jp</code> は、二年近く、動いていないのに動的だったサイトでした。今回の移行は、その状態に区切りをつける作業でもありました。</p>
-    </div>
-  </div>
-</section>
-
-</div>
-
-<footer>本記事は、筆者が 2026 年 8 月におこなった移行作業の一次記録です。移行対象のドメイン名 <code>pyx.co.jp</code> 、および利用したレンタルサーバー・ドメイン事業者の名称（ XServer ）は、実名で記載しています。<br>一方で、サーバーの契約 ID 、サポートへの問い合わせ番号、旧サーバーの IP アドレス、ドメインの登録者情報など、それ自体が特定や悪用につながりうる識別情報は、記事の趣旨に必要ないため伏せてあります。<br>金額・手順・画面の文言は、利用するサービスや時期によって異なる場合があります。実際の作業前には、各サービスの公式ドキュメントもあわせて確認してください。</footer>
-
+<div id="controls-hint">
+  <kbd id="key-up">&#8593;</kbd><kbd id="key-down">&#8595;</kbd><kbd id="key-left">&#8592;</kbd><kbd id="key-right">&#8594;</kbd>
+  <span class="alt-keys">or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+  to fly &nbsp;&mdash;&nbsp; move mouse to steer
 </div>
 
 <script>
-(function(){
-  var OPEN_SCROLL_DELAY = 400;
+(function () {
+  var win = { w: window.innerWidth, h: window.innerHeight };
+  window.addEventListener('resize', function () {
+    win.w = window.innerWidth; win.h = window.innerHeight;
+  });
 
-  function bindAccordion(itemSelector, toggleSelector){
-    document.querySelectorAll(itemSelector).forEach(function(item){
-      var toggle = item.querySelector(toggleSelector);
-      toggle.addEventListener("click", function(){
-        var willOpen = !item.classList.contains("open");
-        item.classList.toggle("open", willOpen);
-        if(willOpen){
-          setTimeout(function(){
-            item.scrollIntoView({behavior:"smooth", block:"start"});
-          }, OPEN_SCROLL_DELAY);
-        }
-      });
+  var drone = document.getElementById('drone');
+  var altVal = document.getElementById('alt-val');
+  var hdgVal = document.getElementById('hdg-val');
+  var spdVal = document.getElementById('spd-val');
+  var hint = document.getElementById('controls-hint');
+  var autoBadge = document.getElementById('auto-badge');
+  var recBadge = document.getElementById('rec-badge');
+  var frameCount = document.getElementById('frame-count');
+  var cameraLens = document.getElementById('camera-lens');
+
+  var pos = { x: win.w / 2, y: win.h / 2 };
+  var vel = { x: 0, y: 0 };
+  var target = { x: win.w / 2, y: win.h / 2 };
+  var usingKeys = false;
+  var lastInputTime = Date.now();
+
+  var groundLimit = function () { return win.h * 0.86; };
+  var margin = 40;
+
+  window.addEventListener('mousemove', function (e) {
+    // While a key is physically held, the keyboard owns the drone -- a
+    // resting hand on a trackpad must not be able to steal control.
+    if (anyKeyDown()) {
+      target.x = e.clientX;
+      target.y = e.clientY;
+      return;
+    }
+    var moved = Math.abs(e.clientX - target.x) > 1 || Math.abs(e.clientY - target.y) > 1;
+    target.x = e.clientX;
+    target.y = e.clientY;
+    if (moved) {
+      usingKeys = false;
+      autopilot = false;
+      lastInputTime = Date.now();
+      fadeHint();
+    }
+  });
+
+
+  window.addEventListener('touchmove', function (e) {
+    if (!e.touches || !e.touches[0]) return;
+    target.x = e.touches[0].clientX;
+    target.y = e.touches[0].clientY;
+    usingKeys = false;
+    autopilot = false;
+    lastInputTime = Date.now();
+    fadeHint();
+    e.preventDefault();
+  }, { passive: false });
+
+  // Map a keyboard event onto a direction. Arrow keys are primary; WASD
+  // works too. e.key covers modern browsers, keyCode is the old fallback.
+  var keys = { up: false, down: false, left: false, right: false };
+  var KEY_DIRS = {
+    ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+    w: 'up', s: 'down', a: 'left', d: 'right',
+    W: 'up', S: 'down', A: 'left', D: 'right'
+  };
+  var CODE_DIRS = { 38: 'up', 40: 'down', 37: 'left', 39: 'right',
+                    87: 'up', 83: 'down', 65: 'left', 68: 'right' };
+
+  function dirOf(e) {
+    if (e.key && KEY_DIRS[e.key]) return KEY_DIRS[e.key];
+    var kc = e.keyCode || e.which;
+    return (kc && CODE_DIRS[kc]) ? CODE_DIRS[kc] : null;
+  }
+
+  function anyKeyDown() {
+    return keys.up || keys.down || keys.left || keys.right;
+  }
+
+  function lightKey(dir, on) {
+    var node = document.getElementById('key-' + dir);
+    if (!node) return;
+    if (on) node.classList.add('pressed');
+    else node.classList.remove('pressed');
+  }
+
+  window.addEventListener('keydown', function (e) {
+    var dir = dirOf(e);
+    if (!dir) return;
+    keys[dir] = true;
+    lightKey(dir, true);
+    usingKeys = true;
+    autopilot = false;
+    lastInputTime = Date.now();
+    fadeHint();
+    e.preventDefault();
+  });
+
+  window.addEventListener('keyup', function (e) {
+    var dir = dirOf(e);
+    if (!dir) return;
+    keys[dir] = false;
+    lightKey(dir, false);
+    e.preventDefault();
+  });
+
+  // Releasing keys while the page loses focus avoids a stuck throttle.
+  window.addEventListener('blur', function () {
+    keys.up = keys.down = keys.left = keys.right = false;
+    lightKey('up', false); lightKey('down', false);
+    lightKey('left', false); lightKey('right', false);
+  });
+
+  var hintFaded = false;
+  function fadeHint() {
+    if (hintFaded) return;
+    hintFaded = true;
+    setTimeout(function () { hint.style.opacity = '0.35'; }, 2200);
+  }
+
+  var accel = 0.9;
+  var friction = 0.92;
+  var maxSpeed = 9;
+  var followEase = 0.045;
+
+  var trailCanvas = document.getElementById('trail-canvas');
+  var ctx = trailCanvas.getContext('2d');
+  function resizeCanvas() {
+    trailCanvas.width = window.innerWidth;
+    trailCanvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  var trail = [];
+
+  var rippleCanvas = document.getElementById('ripple-canvas');
+  var rctx = rippleCanvas.getContext('2d');
+  function resizeRippleCanvas() {
+    rippleCanvas.width = window.innerWidth;
+    rippleCanvas.height = window.innerHeight;
+  }
+  resizeRippleCanvas();
+  window.addEventListener('resize', resizeRippleCanvas);
+
+  var ripples = [];
+  function spawnRipple(x, y) {
+    ripples.push({ x: x, y: y, r: 4, a: 1 });
+  }
+  window.addEventListener('click', function (e) {
+    spawnRipple(e.clientX, e.clientY);
+  });
+  window.addEventListener('touchstart', function (e) {
+    if (!e.touches || !e.touches[0]) return;
+    spawnRipple(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+
+  function drawRipples() {
+    rctx.clearRect(0, 0, rippleCanvas.width, rippleCanvas.height);
+    for (var i = ripples.length - 1; i >= 0; i--) {
+      var r = ripples[i];
+      r.r += 3.6;
+      r.a *= 0.955;
+      if (r.a < 0.02) { ripples.splice(i, 1); continue; }
+      rctx.beginPath();
+      rctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+      rctx.strokeStyle = 'rgba(255,255,255,' + r.a.toFixed(3) + ')';
+      rctx.lineWidth = 1.6;
+      rctx.stroke();
+      rctx.beginPath();
+      rctx.arc(r.x, r.y, r.r * 0.6, 0, Math.PI * 2);
+      rctx.strokeStyle = 'rgba(255,255,255,' + (r.a * 0.5).toFixed(3) + ')';
+      rctx.lineWidth = 1;
+      rctx.stroke();
+    }
+  }
+
+  // ---- Background sky show: distant fireworks and the occasional rocket ----
+  // Kept deliberately small, pale and slow so it reads as scenery happening
+  // far behind the drone, never competing with the HUD or the camera work.
+  var skyCanvas = document.getElementById('sky-canvas');
+  var sctx = skyCanvas.getContext('2d');
+  function resizeSkyCanvas() {
+    skyCanvas.width = window.innerWidth;
+    skyCanvas.height = window.innerHeight;
+  }
+  resizeSkyCanvas();
+  window.addEventListener('resize', resizeSkyCanvas);
+
+  var sparks = [];      // firework shells + burst particles
+  var flashes = [];     // soft glow at the moment of each burst
+  var rocket = null;    // at most one rocket at a time
+  var smoke = [];       // rocket exhaust column
+  var skyBusy = false;  // fireworks and rockets never overlap
+
+  var nextFireworkAt = Date.now() + 3000 + Math.random() * 4000;
+  var nextRocketAt = Date.now() + 22000 + Math.random() * 20000;
+
+  function horizonY() { return win.h * 0.86; }
+
+  function launchFirework() {
+    // Keep bursts clear of the HUD corners: bias toward the middle band.
+    var x = win.w * (0.18 + Math.random() * 0.52);
+    var peak = win.h * (0.20 + Math.random() * 0.26);
+    sparks.push({
+      kind: 'shell',
+      x: x, y: horizonY(),
+      vy: -(6.5 + Math.random() * 2.2),
+      peak: peak,
+      a: 0.85
     });
   }
 
-  bindAccordion("[data-acc]", "[data-acc-toggle]");
+  function burst(x, y) {
+    var count = 42 + Math.floor(Math.random() * 22);
+    var power = 2.6 + Math.random() * 1.9;
+    for (var i = 0; i < count; i++) {
+      var ang = (Math.PI * 2 * i) / count + Math.random() * 0.2;
+      var sp = power * (0.6 + Math.random() * 0.7);
+      sparks.push({
+        kind: 'ember',
+        x: x, y: y,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp,
+        a: 1,
+        decay: 0.978 + Math.random() * 0.012
+      });
+    }
+    flashes.push({ x: x, y: y, r: 8, a: 0.5 });
+  }
 
-  document.getElementById("expandAll").addEventListener("click", function(){
-    document.querySelectorAll("[data-acc]").forEach(function(item){
-      item.classList.add("open");
-    });
-  });
+  function launchRocket() {
+    rocket = {
+      x: win.w * (0.22 + Math.random() * 0.46),
+      y: horizonY(),
+      vy: -1.1,
+      age: 0
+    };
+  }
 
-  document.getElementById("collapseAll").addEventListener("click", function(){
-    document.querySelectorAll("[data-acc]").forEach(function(item){
-      item.classList.remove("open");
-    });
-  });
+  function updateSkyShow() {
+    var now = Date.now();
+
+    if (!skyBusy && !rocket && now > nextRocketAt) {
+      launchRocket();
+      skyBusy = true;
+      nextRocketAt = now + 45000 + Math.random() * 40000;
+    }
+
+    if (!skyBusy && now > nextFireworkAt) {
+      launchFirework();
+      nextFireworkAt = now + 3500 + Math.random() * 6000;
+      // occasional quick double
+      if (Math.random() < 0.35) {
+        setTimeout(function () { if (!skyBusy) launchFirework(); }, 420 + Math.random() * 500);
+      }
+    }
+
+    for (var i = sparks.length - 1; i >= 0; i--) {
+      var s = sparks[i];
+      if (s.kind === 'shell') {
+        s.y += s.vy;
+        s.vy *= 0.995;
+        if (s.y <= s.peak || s.vy > -1.2) {
+          burst(s.x, s.y);
+          sparks.splice(i, 1);
+        }
+      } else {
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += 0.035;      // gravity
+        s.vx *= 0.985;
+        s.vy *= 0.985;
+        s.a *= s.decay;
+        if (s.a < 0.015) sparks.splice(i, 1);
+      }
+    }
+
+    for (var f = flashes.length - 1; f >= 0; f--) {
+      var fl = flashes[f];
+      fl.r += 2.6;
+      fl.a *= 0.90;
+      if (fl.a < 0.01) flashes.splice(f, 1);
+    }
+
+    if (rocket) {
+      rocket.age += 16.7;
+      rocket.vy -= 0.028;                     // steady acceleration
+      rocket.vy = Math.max(rocket.vy, -9.5);
+      rocket.y += rocket.vy;
+      rocket.x += Math.sin(rocket.age / 900) * 0.25;
+
+      if (rocket.age % 33 < 17) {
+        smoke.push({ x: rocket.x + (Math.random() - 0.5) * 3, y: rocket.y + 6, r: 2, a: 0.35 });
+      }
+      if (rocket.y < -40) {
+        rocket = null;
+        skyBusy = false;
+      }
+    }
+
+    for (var j = smoke.length - 1; j >= 0; j--) {
+      var m = smoke[j];
+      m.r += 0.17;
+      m.y += 0.12;
+      m.a *= 0.972;
+      if (m.a < 0.01) smoke.splice(j, 1);
+    }
+  }
+
+  function drawSkyShow() {
+    sctx.clearRect(0, 0, skyCanvas.width, skyCanvas.height);
+
+    for (var f = 0; f < flashes.length; f++) {
+      var fl = flashes[f];
+      var g = sctx.createRadialGradient(fl.x, fl.y, 0, fl.x, fl.y, fl.r);
+      g.addColorStop(0, 'rgba(255,255,255,' + (fl.a * 0.5).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      sctx.fillStyle = g;
+      sctx.beginPath();
+      sctx.arc(fl.x, fl.y, fl.r, 0, Math.PI * 2);
+      sctx.fill();
+    }
+
+    for (var j = 0; j < smoke.length; j++) {
+      var m = smoke[j];
+      sctx.beginPath();
+      sctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+      sctx.fillStyle = 'rgba(190,190,190,' + (m.a * 0.34).toFixed(3) + ')';
+      sctx.fill();
+    }
+
+    if (rocket) {
+      // exhaust flare
+      var flare = sctx.createLinearGradient(rocket.x, rocket.y, rocket.x, rocket.y + 26);
+      flare.addColorStop(0, 'rgba(255,255,255,.85)');
+      flare.addColorStop(1, 'rgba(255,255,255,0)');
+      sctx.fillStyle = flare;
+      sctx.beginPath();
+      sctx.moveTo(rocket.x - 2.4, rocket.y);
+      sctx.lineTo(rocket.x + 2.4, rocket.y);
+      sctx.lineTo(rocket.x, rocket.y + 26);
+      sctx.closePath();
+      sctx.fill();
+      // body
+      sctx.fillStyle = 'rgba(255,255,255,.95)';
+      sctx.beginPath();
+      sctx.arc(rocket.x, rocket.y, 2.1, 0, Math.PI * 2);
+      sctx.fill();
+    }
+
+    for (var i = 0; i < sparks.length; i++) {
+      var s = sparks[i];
+      if (s.kind === 'shell') {
+        sctx.beginPath();
+        sctx.arc(s.x, s.y, 1.7, 0, Math.PI * 2);
+        sctx.fillStyle = 'rgba(255,255,255,' + s.a.toFixed(3) + ')';
+        sctx.fill();
+        sctx.beginPath();
+        sctx.moveTo(s.x, s.y);
+        sctx.lineTo(s.x, s.y + 12);
+        sctx.strokeStyle = 'rgba(255,255,255,' + (s.a * 0.22).toFixed(3) + ')';
+        sctx.lineWidth = 1;
+        sctx.stroke();
+      } else {
+        sctx.beginPath();
+        sctx.arc(s.x, s.y, 2.1, 0, Math.PI * 2);
+        sctx.fillStyle = 'rgba(255,255,255,' + (s.a * 0.95).toFixed(3) + ')';
+        sctx.fill();
+      }
+    }
+  }
+
+  // Aerial photography sim: every so often the drone "spots" a subject
+  // somewhere on screen, racks focus onto it with a viewfinder bracket,
+  // then fires a quiet shutter pulse. Runs independently of manual or
+  // autopilot flight -- the camera doesn't care who's driving.
+  var focusCanvas = document.getElementById('focus-canvas');
+  var fctx = focusCanvas.getContext('2d');
+  function resizeFocusCanvas() {
+    focusCanvas.width = window.innerWidth;
+    focusCanvas.height = window.innerHeight;
+  }
+  resizeFocusCanvas();
+  window.addEventListener('resize', resizeFocusCanvas);
+
+  var shot = null; // { x, y, phase, t, spread }
+  var frameNumber = 1;
+  var nextShotAt = Date.now() + 2600 + Math.random() * 1800;
+  var shutterFlash = 0;
+
+  function scheduleNextShot() {
+    nextShotAt = Date.now() + 6000 + Math.random() * 5000;
+  }
+
+  function maybeStartShot() {
+    if (shot || Date.now() < nextShotAt) return;
+    var gl = groundLimit();
+    // If a rocket is climbing, the camera goes for the money shot instead
+    // of picking a random patch of sky.
+    if (rocket && rocket.y > 60 && rocket.y < win.h * 0.8) {
+      shot = {
+        x: rocket.x,
+        y: rocket.y,
+        phase: 'seek',
+        t: 0,
+        spread: 150,
+        track: true
+      };
+    } else {
+      shot = {
+        x: 90 + Math.random() * (win.w - 180),
+        y: 90 + Math.random() * (Math.min(gl, win.h * 0.7) - 90),
+        phase: 'seek',
+        t: 0,
+        spread: 130 + Math.random() * 70,
+        track: false
+      };
+    }
+    recBadge.classList.add('show');
+  }
+
+  function updateShot() {
+    if (!shot) { maybeStartShot(); return; }
+    shot.t += 16.7;
+
+    if (shot.track) {
+      if (rocket) {
+        shot.x += (rocket.x - shot.x) * 0.18;
+        shot.y += (rocket.y - shot.y) * 0.18;
+      } else {
+        shot.track = false;
+      }
+    }
+
+    if (shot.phase === 'seek') {
+      cameraLens.classList.add('capturing');
+      if (shot.t > 650) { shot.phase = 'hold'; shot.t = 0; }
+    } else if (shot.phase === 'hold') {
+      if (shot.t > 380) {
+        shot.phase = 'shutter';
+        shot.t = 0;
+        shutterFlash = 1;
+      }
+    } else if (shot.phase === 'shutter') {
+      if (shot.t > 90) {
+        shot.phase = 'release';
+        shot.t = 0;
+      }
+    } else if (shot.phase === 'release') {
+      cameraLens.classList.remove('capturing');
+      if (shot.t > 260) {
+        frameNumber++;
+        frameCount.textContent = String(frameNumber).padStart(3, '0');
+        recBadge.classList.remove('show');
+        shot = null;
+        scheduleNextShot();
+      }
+    }
+  }
+
+  function drawShot() {
+    fctx.clearRect(0, 0, focusCanvas.width, focusCanvas.height);
+
+    if (shutterFlash > 0.01) {
+      fctx.fillStyle = 'rgba(255,255,255,' + (shutterFlash * 0.10).toFixed(3) + ')';
+      fctx.fillRect(0, 0, focusCanvas.width, focusCanvas.height);
+      shutterFlash *= 0.82;
+    }
+
+    if (!shot) return;
+
+    var progress, size, alpha;
+    if (shot.phase === 'seek') {
+      progress = Math.min(1, shot.t / 650);
+      size = shot.spread * (1 - 0.4 * progress);
+      alpha = progress;
+    } else if (shot.phase === 'hold') {
+      size = shot.spread * 0.6;
+      alpha = 1;
+    } else if (shot.phase === 'shutter') {
+      size = shot.spread * 0.6 * (1 - shot.t / 90 * 0.15);
+      alpha = 1;
+    } else {
+      progress = Math.min(1, shot.t / 260);
+      size = shot.spread * 0.6 * (1 + progress * 0.5);
+      alpha = 1 - progress;
+    }
+
+    var half = size / 2;
+    var arm = size * 0.22;
+    var cx = shot.x, cy = shot.y;
+    var col = shot.phase === 'shutter' ? '255,255,255' : '235,235,235';
+    fctx.strokeStyle = 'rgba(' + col + ',' + alpha.toFixed(3) + ')';
+    fctx.lineWidth = shot.phase === 'shutter' ? 2.4 : 1.6;
+
+    function corner(sx, sy, dx, dy) {
+      fctx.beginPath();
+      fctx.moveTo(sx, sy + dy * arm);
+      fctx.lineTo(sx, sy);
+      fctx.lineTo(sx + dx * arm, sy);
+      fctx.stroke();
+    }
+    corner(cx - half, cy - half, 1, 1);
+    corner(cx + half, cy - half, -1, 1);
+    corner(cx - half, cy + half, 1, -1);
+    corner(cx + half, cy + half, -1, -1);
+
+    if (shot.phase === 'hold' || shot.phase === 'shutter') {
+      fctx.fillStyle = 'rgba(' + col + ',' + (alpha * 0.85).toFixed(3) + ')';
+      fctx.beginPath();
+      fctx.arc(cx, cy, 1.6, 0, Math.PI * 2);
+      fctx.fill();
+    }
+  }
+
+  // Autopilot: after a few seconds of no input, the drone drifts on its own
+  // in a lazy Lissajous-style search pattern until the person moves the
+  // mouse, touches, or presses a key again.
+  var autopilot = false;
+  var autopilotSince = 0;
+  var AUTOPILOT_DELAY = 3200;
+  var apSeed = Math.random() * 1000;
+
+  function updateAutopilot() {
+    var idle = Date.now() - lastInputTime;
+    if (!autopilot && idle > AUTOPILOT_DELAY) {
+      autopilot = true;
+      autopilotSince = Date.now();
+      autoBadge.classList.add('show');
+    }
+    if (!autopilot) {
+      autoBadge.classList.remove('show');
+    }
+    if (autopilot) {
+      var t = (Date.now() - autopilotSince) / 1000 + apSeed;
+      var cx = win.w / 2;
+      var cy = Math.min(win.h * 0.42, groundLimit() - 140);
+      var rx = Math.min(win.w * 0.32, 340);
+      var ry = Math.min(win.h * 0.22, 180);
+      target.x = cx + Math.sin(t * 0.35) * rx;
+      target.y = cy + Math.sin(t * 0.55 + 1.3) * ry;
+    }
+  }
+
+  function step() {
+    updateAutopilot();
+
+    if (usingKeys && !autopilot) {
+      if (keys.up) vel.y -= accel;
+      if (keys.down) vel.y += accel;
+      if (keys.left) vel.x -= accel;
+      if (keys.right) vel.x += accel;
+      vel.x *= friction;
+      vel.y *= friction;
+      var sp = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
+      if (sp > maxSpeed) { vel.x = vel.x / sp * maxSpeed; vel.y = vel.y / sp * maxSpeed; }
+      pos.x += vel.x;
+      pos.y += vel.y;
+    } else {
+      var dx = target.x - pos.x;
+      var dy = target.y - pos.y;
+      var ease = autopilot ? 0.02 : followEase;
+      pos.x += dx * ease;
+      pos.y += dy * ease;
+      vel.x = dx * ease;
+      vel.y = dy * ease;
+    }
+
+    var gl = groundLimit();
+    if (pos.x < margin) { pos.x = margin; vel.x = 0; }
+    if (pos.x > win.w - margin) { pos.x = win.w - margin; vel.x = 0; }
+    if (pos.y < margin + 60) { pos.y = margin + 60; vel.y = 0; }
+    if (pos.y > gl) { pos.y = gl; vel.y = 0; }
+
+    var speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
+    var heading = (Math.atan2(vel.x, -vel.y) * 180 / Math.PI + 360) % 360;
+    var tilt = Math.max(-22, Math.min(22, vel.x * 2.2));
+
+    drone.style.transform = 'translate(' + (pos.x - 32) + 'px,' + (pos.y - 32) + 'px) rotate(' + tilt + 'deg)';
+
+    var altitude = Math.round((gl - pos.y) / gl * 180);
+    altVal.textContent = Math.max(0, altitude);
+    hdgVal.textContent = String(Math.round(heading)).padStart(3, '0');
+    spdVal.textContent = (speed).toFixed(1);
+
+    var speedRatio = Math.min(1, speed / maxSpeed);
+    trail.push({ x: pos.x, y: pos.y, a: 1, r: 1.4 + speedRatio * 2.2 });
+    if (trail.length > 100) trail.shift();
+    ctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+    for (var i = 0; i < trail.length; i++) {
+      var p = trail[i];
+      p.a *= 0.97;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + (p.a * (0.25 + speedRatio * 0.35)).toFixed(3) + ')';
+      ctx.fill();
+    }
+
+    updateSkyShow();
+    drawSkyShow();
+
+    drawRipples();
+
+    updateShot();
+    if (shot && shot.phase === 'shutter' && shot.t < 17) {
+      spawnRipple(shot.x, shot.y);
+    }
+    drawShot();
+
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 })();
 </script>
+
 </body>
 </html>
